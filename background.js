@@ -24,6 +24,7 @@ function logLatestHistory() {
 // Listen for messages from other parts of the extension
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "logLatestHistory") {
-        logLatestHistory();
+        // logLatestHistory();
+        chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
     }
 });

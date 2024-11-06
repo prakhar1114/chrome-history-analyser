@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Resizable Widgets with Date Range Input</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Date Range Buttons Container -->
+  <div class="date-range-container" id="date-range-buttons">
+    <!-- Buttons will be added here dynamically -->
+  </div>
+
+  <div class="widget-container">
+    <!-- Example Widget -->
+    <div class="widget resizable" id="example-widget">
+      <div class="widget-header">
+        <h2>Example Widget</h2>
+        <div class="resize-handle"></div>
+      </div>
+      <div class="widget-content">
+        <!-- Content will be loaded here based on date range -->
+        <p>Content from <span id="display-start-date"></span> to <span id="display-end-date"></span></p>
+      </div>
+    </div>
+
+    <!-- Add more resizable widgets here -->
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
