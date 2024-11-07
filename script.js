@@ -1,8 +1,13 @@
+import { getSummarizer } from './summarizer.js';
+let startDate, endDate;
+
+
 document.addEventListener('DOMContentLoaded', () => {
     addDateRangeButtons();
     addRefreshButton();
-    addOverallSummaryWidget();
-    loadContent();
+    setDateRange('24h');
+    addOrUpdateRecentHistoryWidget();
+    addOrUpdateBasicSummaryWidget();
     enableResizing();
   
     document.getElementById('refresh-button').addEventListener('click', () => {
@@ -43,10 +48,25 @@ document.addEventListener('DOMContentLoaded', () => {
         button.className = 'date-range-button';
         button.textContent = data.label;
         button.setAttribute('data-range', data.range);
+
+        // Highlight the default selected button
+        if (data.range === '24h') {
+            button.classList.add('selected');
+        }
+
         button.addEventListener('click', () => {
             setDateRange(data.range);
             loadContent();
+
+            // Remove 'selected' class from all buttons
+            document.querySelectorAll('.date-range-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // Add 'selected' class to the clicked button
+            button.classList.add('selected');
         });
+
         container.appendChild(button);
     });
   }
@@ -54,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setDateRange(range) {
     const today = new Date();
-    let startDate, endDate;
 
     switch (range) {
         case '24h':
@@ -112,44 +131,65 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
   /* Add Overall Summary Widget */
-  function addOverallSummaryWidget() {
+  function addOrUpdateRecentHistoryWidget() {
+    const newWidget = createOrGetWidget('recent-history', 'Recent History');
+
+    // delete chidlren containing *contents*
+    while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('contents')) {
+        newWidget.removeChild(newWidget.lastChild);
+    }
+
+    createRecentHistoryElement().then((widget) => {
+        newWidget.appendChild(widget);
+    });
+  }
+
+  function addOrUpdateBasicSummaryWidget() {
+    const newWidget = createOrGetWidget('basic-summary', 'Summary');
+
+    // delete chidlren containing *contents*
+    while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('contents')) {
+        newWidget.removeChild(newWidget.lastChild);
+    }
+
+    createBasicSummaryElement().then((widget) => {
+        newWidget.appendChild(widget);
+    });
+  }
+
+  function createOrGetWidget(uniqueID, widgetTitle) {
+    if (document.getElementById(uniqueID)) {
+      return document.getElementById(uniqueID);
+    }
+
     const widgetContainer = document.querySelector('.widget-container');
 
     // Create a new widget element
     const newWidget = document.createElement('div');
     newWidget.className = 'widget resizable';
 
-
-    // add a condition to check if the widget already exists
     // Generate a unique ID for the new widget
-    const uniqueId = `overall summary`;
-    newWidget.id = uniqueId;
+    newWidget.id = uniqueID;
 
     // Set the content of the new widget
     newWidget.innerHTML = `
         <div class="widget-header">
-            <h2>New Widget</h2>
+            <h2>${widgetTitle}</h2>
             <div class="resize-handle"></div>
-        </div>
-        <div class="widget-content">
-            <p>Some random content</p>
         </div>
     `;
 
     // Append the new widget to the widget container
     widgetContainer.appendChild(newWidget);
 
-    createRecentHistoryWidget().then((widget) => {
-        newWidget.appendChild(widget);
-    });
-
+    return newWidget;
   }
+
 
   /* Load Content Based on Date Range */
   function loadContent() {
-    const startDate = document.getElementById('display-start-date').textContent;
-    const endDate = document.getElementById('display-end-date').textContent;
-
+    addOrUpdateRecentHistoryWidget();
+    addOrUpdateBasicSummaryWidget();
   }
   
   /* Enable Resizing */
@@ -237,9 +277,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function getHistory() {
+  function getHistory(numResults) {
+    // generate some random text: TODO fix this later to do better indexing
+    const randomText = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+
     return new Promise((resolve, reject) => {
-      chrome.history.search({ text: '', maxResults: 5 }, (results) => {
+      chrome.history.search({ text: randomText, maxResults: numResults, startTime: startDate.getTime(), endTime: endDate.getTime() }, (results) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -250,16 +293,59 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function createRecentHistoryWidget() {
+  async function createRecentHistoryElement() {
     // get history from getHistory function and create a widget with the history items
-    return getHistory().then((historyItems) => {
+    // TODO: get a number of items from somewhere
+    return getHistory(10).then((historyItems) => {
       const list = document.createElement('ul');
+      list.id = 'recent-history-contents';
       historyItems.forEach(item => {
         const li = document.createElement('li');
-        li.innerHTML = `<a href="${item.url}" target="_blank">${item.title || item.url}</a>`;
+        li.innerHTML = `<a href="${item.url}" target="_blank">${item.title || extractDomain(item.url)}</a>`;
         list.appendChild(li);
       });
       return list;
     });
-
   }
+
+  async function createBasicSummaryElement() {
+    // TODO: get a number of items from somewhere
+    const historyItems = await getHistory(40);
+    console.log(historyItems);
+    const textElement = document.createElement('p');
+    textElement.id = 'basic-summary-contents';
+
+    const historyItemTitles = historyItems.map(item => item.title || extractDomain(item.url)).join('\n');
+
+    const summarizer = await getSummarizer();
+    const result = await summarizer.summarize(historyItemTitles);
+    console.log(result);
+
+    // update the text content of the text element
+    // textElement.textContent = result;
+    textElement.innerHTML = markdownToHtml(result);
+
+    return textElement;
+  }
+
+  // write a function to extract domain name from a url
+  function extractDomain(url) {
+    return new URL(url).hostname;
+  }
+
+
+  function markdownToHtml(markdownText) {
+    // Convert bold text: **text**
+    let html = markdownText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Convert italic text: *text*
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Convert bullet points: * item
+    html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+    
+    // Wrap list items in <ul> tags
+    html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+
+    return html;
+}

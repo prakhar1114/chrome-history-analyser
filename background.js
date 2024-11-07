@@ -21,6 +21,8 @@ function logLatestHistory() {
     });
 }
 
+// await initializeSummarizer();
+
 // Listen for messages from other parts of the extension
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "logLatestHistory") {
