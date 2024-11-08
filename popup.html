@@ -2,10 +2,21 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>My Chrome Usage Analyser</title>
+  <link rel="stylesheet" href="popup-styles.css">
 </head>
 <body>
-  <button id="log-history">Log Latest History</button>
+  <div class="container">
+    <input type="text" id="searchInput" placeholder="Search...">
+    <button id="searchBtn">Search</button>
+    <div id="results"></div>
+    <div class="button-group">
+      <button id="indexOldDataBtn">Index Old Data</button>
+      <button id="showDashboardBtn">Show Dashboard</button>
+    </div>
+  </div>
+  <script src="db.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

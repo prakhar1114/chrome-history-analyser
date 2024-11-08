@@ -141,3 +141,40 @@ a:hover {
     color: #fff;
     border: 2px solid #004494; /* Optional: Add a border for emphasis */
 }
+
+#searchInput {
+    width: 70%;
+    padding: 5px;
+  }
+  
+.result-item {
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+}
+  
+.result-item a {
+    font-weight: bold;
+    text-decoration: none;
+    color: #1a0dab;
+}
+  
+.result-item a:hover {
+    text-decoration: underline;
+}
+  
+.result-item p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.scrollable-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.result-item {
+    margin-bottom: 10px;
+}

@@ -1,4 +1,4 @@
-import { getSummarizer } from './summarizer.js';
+import { getSummarizer } from './ai/summarizer.js';
 let startDate, endDate;
 
 

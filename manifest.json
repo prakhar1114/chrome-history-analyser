@@ -3,7 +3,13 @@
     "name": "My Chrome Usage Analyser",
     "version": "1.0",
     "description": "Creates an amazing dashboard for your history over time.",
-    "permissions": ["history", "storage", "tabs"],
+    "permissions": [
+      "history",
+      "storage",
+      "tabs",
+      "activeTab",
+      "scripting"
+    ],
     "background": {
       "service_worker": "background.js"
     },

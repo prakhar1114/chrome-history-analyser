@@ -1,32 +1,110 @@
-// background.js
+// Include the database functions
+importScripts('db.js');
 
-// Function to get the latest history items and create a new HTML page
-function logLatestHistory() {
-    chrome.history.search({ text: '', maxResults: 5 }, (results) => {
-        let htmlContent = "<html><head><title>Latest History Items</title></head><body>";
-        if (results.length > 0) {
-            htmlContent += "<h1>Latest History Items:</h1><ul>";
-            results.forEach((item, index) => {
-                htmlContent += `<li>${index + 1}. ${item.title || 'No title'} - <a href="${item.url}" target="_blank">${item.url}</a></li>`;
-            });
-            htmlContent += "</ul>";
-        } else {
-            htmlContent += "<p>No history items found.</p>";
-        }
-        htmlContent += "</body></html>";
-
-        // Create a data URL with the generated HTML content
-        const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-        chrome.tabs.create({ url: dataUrl });
-    });
+// Placeholder functions for generating tags and summaries
+function generateTags(title, url) {
+  // Placeholder: extract keywords from title
+  return title.toLowerCase().split(' ').filter(word => word.length > 3);
 }
 
-// await initializeSummarizer();
+function generateSummary(content) {
+  // Placeholder: summarize content
+  return content ? content.substring(0, 200) + '...' : '';
+}
 
-// Listen for messages from other parts of the extension
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "logLatestHistory") {
-        // logLatestHistory();
-        chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
-    }
+// Track the last indexed time
+let lastIndexedTime = null;
+
+// Load lastIndexedTime from chrome storage
+chrome.storage.local.get(['lastIndexedTime'], (result) => {
+  lastIndexedTime = result.lastIndexedTime || null;
+});
+
+// Function to index old data
+function indexOldData() {
+  // Update lastIndexedTime to null
+  lastIndexedTime = null;
+  chrome.storage.local.set({ lastIndexedTime: null });
+
+  // Clear existing database
+  openDatabase().then(() => {
+    return clearDatabase();
+  }).then(() => {
+    // Fetch all history items
+    chrome.history.search({
+      text: '',
+      startTime: 0, // From the beginning
+      maxResults: 0 // Unlimited
+    }, (historyItems) => {
+      // Process each history item
+      const promises = historyItems.map((item) => {
+        const tags = generateTags(item.title || '', item.url);
+        const summary = ''; // Placeholder, as per requirement
+
+        // Prepare the item
+        const historyEntry = {
+          id: item.id,
+          url: item.url,
+          title: item.title,
+          lastVisitTime: item.lastVisitTime,
+          tags: tags,
+          summary: summary
+        };
+
+        // Add to database
+        return addHistoryItem(historyEntry);
+      });
+
+      // Wait for all items to be added
+      Promise.all(promises).then(() => {
+        console.log('Old data indexed successfully.');
+        // Update lastIndexedTime to current time
+        lastIndexedTime = Date.now();
+        chrome.storage.local.set({ lastIndexedTime });
+      }).catch((error) => {
+        console.error('Error indexing old data:', error);
+      });
+    });
+  });
+}
+
+// Real-time summary and tag generation
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete') {
+    const content = tab.title + " " + tab.url;
+    const summary = generateSummary(content);
+    const tags = generateTags(tab.title || '', tab.url);
+
+    // Create history item
+    const historyEntry = {
+    id: `tab-${tabId}-${Date.now()}`, // Unique ID
+    url: tab.url,
+    title: tab.title,
+    lastVisitTime: Date.now(),
+    tags: tags,
+    summary: summary
+    };
+
+    // Add to database
+    openDatabase().then(() => {
+    return addHistoryItem(historyEntry);
+    }).then(() => {
+    console.log('Real-time data indexed for tab:', tabId);
+    // Update lastIndexedTime
+    lastIndexedTime = Date.now();
+    chrome.storage.local.set({ lastIndexedTime });
+    }).catch((error) => {
+    console.error('Error indexing real-time data:', error);
+    });
+}});
+
+
+// Expose indexOldData function to popup.js via message passing
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'indexOldData') {
+    indexOldData();
+    sendResponse({ status: 'Indexing started' });
+  } else if (request.action === 'displaySummary') {
+    chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
+  }
 });
