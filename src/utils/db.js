@@ -2,7 +2,7 @@
 
 let db;
 
-function openDatabase() {
+export async function openDatabase() {
   return new Promise((resolve, reject) => {
     if (db) {
       resolve(db);
@@ -33,7 +33,7 @@ function openDatabase() {
   });
 }
 
-async function clearDatabase() {
+export async function clearDatabase() {
   await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readwrite');
@@ -51,7 +51,7 @@ async function clearDatabase() {
   });
 }
 
-async function addHistoryItem(item) {
+export async function addHistoryItem(item) {
   await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readwrite');
@@ -89,7 +89,7 @@ async function addHistoryItem(item) {
   });
 }
 
-async function getAllHistoryItems() {
+export async function getAllHistoryItems() {
   await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readonly');
@@ -115,7 +115,7 @@ async function getAllHistoryItems() {
  * @param {number} lastVisitTime - The last visit time of the history item.
  * @returns {Promise<boolean>} - A promise that resolves to true if the item exists, false otherwise.
  */
-async function checkIfItemExists(lastVisitTime) {
+export async function checkIfItemExists(lastVisitTime) {
   // Ensure the database is open
   await openDatabase();
 

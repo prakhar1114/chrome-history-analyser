@@ -1,3 +1,5 @@
+import { openDatabase } from '../utils/db.js';
+
 let loaded_db;
 
 document.addEventListener('DOMContentLoaded', () => {

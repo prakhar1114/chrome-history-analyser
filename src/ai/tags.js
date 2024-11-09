@@ -64,7 +64,7 @@ async function getPromptAPISession() {
  * @param {string} title - The website title.
  * @returns {Promise<string[]>} - An array of tag strings.
  */
-async function getTags(title, url) {
+export async function getTags(title, url) {
     const refined_prompt = createRefinedPrompt(sanitizeUrl(url), title);
     const session = await getPromptAPISession();
     let currentSession;

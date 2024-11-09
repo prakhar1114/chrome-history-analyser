@@ -1,7 +1,5 @@
-// Include the database functions
-importScripts('../utils/db.js');
-importScripts('../ai/tags.js');
-
+import { clearDatabase, addHistoryItem, getAllHistoryItems, checkIfItemExists } from '../utils/db.js';
+import { getTags } from '../ai/tags.js';
 
 async function multiGenerateTagAndStore(historyItems) {
     const batchsize = 4;
@@ -10,12 +8,6 @@ async function multiGenerateTagAndStore(historyItems) {
         const batch = historyItems.slice(i, i + batchsize);
         await Promise.all(batch.map(generateTagAndStore));
     }
-
-    // for (let i = 0; i < historyItems.length; i += 1) {
-    //     console.log(`Processing ${i}`);
-    //     await generateTagAndStore(historyItems[i]);
-    // }
-
 }
 
 async function generateTagAndStore(historyItem) {
@@ -37,7 +29,7 @@ async function generateTagAndStore(historyItem) {
     // TODO: generate summary
     historyItem.summary = "";
 
-    addHistoryItem(historyItem);
+    await addHistoryItem(historyItem);
     return;
 }
 
@@ -50,7 +42,6 @@ async function indexOldData() {
   continueIndexing();
   return;
 }
-
 
 function continueIndexing() {
     console.log("indexing now");
@@ -136,7 +127,6 @@ async function updateIndexPercentage() {
     }
 }
 
-
 // Expose indexOldData function to popup.js via message passing
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'indexOldData') {
@@ -147,7 +137,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Indicates that the response is asynchronous
   } else if (request.action === 'displaySummary') {
-    chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("src/user_dashboard/index.html") });
   } else if (request.action === 'continueIndexing') {
     sendResponse({ status: 'Indexing continued' });
     continueIndexing();
