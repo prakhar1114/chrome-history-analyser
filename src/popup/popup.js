@@ -13,6 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    // Send message to background script to index old data
+    chrome.runtime.sendMessage({ action: 'refreshIndexPercentage' }, (response) => {
+      console.log(response.status);
+      setIndexPercentage();
+    });
+  });
+
   document.getElementById('continueIndexing').addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'continueIndexing' }, (response) => {
       console.log(response.status);
@@ -39,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const matches = (
           (item.title && item.title.toLowerCase().includes(query)) ||
           (item.summary && item.summary.toLowerCase().includes(query)) ||
-          (item.tags && item.tags.some(tag => tag.toLowerCase().includes(query)))
+          (item.tags && Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(query)))
         );
         if (matches) {
           results.push(item);
@@ -57,9 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // fetch index percentage
-  chrome.storage.local.get('indexPercentage', (result) => {
-    document.getElementById('indexPercentage').textContent = `Indexed ${result.indexPercentage}% of history`;
-  });
+  setIndexPercentage();
   
 });
 
@@ -106,5 +112,11 @@ function displayResults(results) {
       resultsDiv.innerHTML = ''; // Condense the container
       document.getElementById('searchInput').value = ''; // Clear the search input
     }
+  });
+}
+
+function setIndexPercentage() {
+  chrome.storage.local.get('indexPercentage', (result) => {
+    document.getElementById('indexPercentage').textContent = `Indexed ${result.indexPercentage}% of history`;
   });
 }

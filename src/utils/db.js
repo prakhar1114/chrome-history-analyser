@@ -5,7 +5,6 @@ let db;
 function openDatabase() {
   return new Promise((resolve, reject) => {
     if (db) {
-      console.log("Database already open");
       resolve(db);
       return;
     }
@@ -30,16 +29,17 @@ function openDatabase() {
     request.onsuccess = (event) => {
       db = event.target.result;
       resolve(db);
-      console.log("Database opened");
     };
   });
 }
 
-function clearDatabase() {
+async function clearDatabase() {
+  await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readwrite');
     const objectStore = transaction.objectStore('history');
     const request = objectStore.clear();
+    console.log("Clearing database");
 
     request.onsuccess = () => {
       resolve();
@@ -51,7 +51,8 @@ function clearDatabase() {
   });
 }
 
-function addHistoryItem(item) {
+async function addHistoryItem(item) {
+  await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readwrite');
     const objectStore = transaction.objectStore('history');
@@ -70,7 +71,7 @@ function addHistoryItem(item) {
         const request = objectStore.put(item);
 
         request.onsuccess = () => {
-          console.log(`History item added: ${item.id}`);
+          console.log(`History item added`);
           resolve();
         };
 
@@ -88,7 +89,8 @@ function addHistoryItem(item) {
   });
 }
 
-function getAllHistoryItems() {
+async function getAllHistoryItems() {
+  await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readonly');
     const objectStore = transaction.objectStore('history');
@@ -103,5 +105,52 @@ function getAllHistoryItems() {
       reject(event.target.errorCode);
       console.error('Error fetching all history items:', event.target.errorCode);
     };
+  });
+}
+
+
+
+/**
+ * Checks if a history item with the specified lastVisitTime exists in the IndexedDB.
+ * @param {number} lastVisitTime - The last visit time of the history item.
+ * @returns {Promise<boolean>} - A promise that resolves to true if the item exists, false otherwise.
+ */
+async function checkIfItemExists(lastVisitTime) {
+  // Ensure the database is open
+  await openDatabase();
+
+  try {
+    // Start a readonly transaction
+    const transaction = db.transaction(['history'], 'readonly');
+    const objectStore = transaction.objectStore('history');
+    const index = objectStore.index('lastVisitTime');
+
+    // Initiate the get request
+    const request = index.get(lastVisitTime);
+
+    // Await the result of the get request
+    const result = await promisifyRequest(request);
+
+    // Determine if the item exists
+    const exists = result !== undefined && result !== null;
+
+    // console.log(`Item exists for lastVisitTime ${lastVisitTime}: ${exists}`);
+
+    return exists;
+  } catch (error) {
+    console.error(`Error checking if item exists for lastVisitTime ${lastVisitTime}:`, error);
+    throw error; // Propagate the error to the caller
+  }
+}
+
+/**
+ * Promisifies an IndexedDB request.
+ * @param {IDBRequest} request - The IndexedDB request object.
+ * @returns {Promise<any>} - A promise that resolves with the request result.
+ */
+function promisifyRequest(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }

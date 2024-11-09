@@ -36,3 +36,7 @@ Generating summaries - Realtime:
 
 [X] Announce on twitter and reddit and collect users for betatesting? on twitter just get design ideas and interest
 [ ] maybe just showcase using a video 
+
+
+# Features
+Possibility to search history with date instead of manually adding it as a filter

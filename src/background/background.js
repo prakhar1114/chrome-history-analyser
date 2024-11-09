@@ -1,17 +1,10 @@
 // Include the database functions
-importScripts('db.js');
-importScripts('ai/tags.js');
-// import { getTags } from './ai/tags.js';
+importScripts('../utils/db.js');
+importScripts('../ai/tags.js');
 
-// Placeholder functions for generating tags and summaries
-async function generateTags(title, url) {
-  // Placeholder: extract keywords from title
-  const tags = await getTags2(url, title);
-  return tags;
-}
 
 async function multiGenerateTagAndStore(historyItems) {
-    const batchsize = 8;
+    const batchsize = 4;
     for (let i = 0; i < historyItems.length; i += batchsize) {
         console.log(`Processing batch ${Math.floor(i / batchsize) + 1}`);
         const batch = historyItems.slice(i, i + batchsize);
@@ -27,74 +20,41 @@ async function multiGenerateTagAndStore(historyItems) {
 
 async function generateTagAndStore(historyItem) {
     // Check if the item already exists
-    const index = db.transaction(['history'], 'readonly').objectStore('history').index('lastVisitTime');
-    const request = index.get(historyItem.lastVisitTime);
-    request.onsuccess = (event) => {
-        if (event.target.result) {
-            console.log(`Item already exists: ${historyItem.id}`);
-            return;
-        }
+    const alreadyExists = await checkIfItemExists(historyItem.lastVisitTime);
+    if (alreadyExists) {
+      return;
     }
+
     let tags;
     try {
-        tags = await generateTags(historyItem.title, historyItem.url);
+        tags = await getTags(historyItem.title, historyItem.url);
     } catch (error) {
-        console.error('Error generating tags:', error, `for ${historyItem.id} ${historyItem.url}`);
+        // console.error('Error generating tags:', error, `for ${historyItem.id} ${historyItem.url}`);
         return;
     }
      
     historyItem.tags = tags;
-
     // TODO: generate summary
     historyItem.summary = "";
 
-    // await openDatabase();
     addHistoryItem(historyItem);
     return;
 }
 
-function generateSummary(content) {
-  // Placeholder: summarize content
-  return content ? content.substring(0, 200) + '...' : '';
-}
-
 // Function to index old data
 async function indexOldData() {
-  try {
-    // Ensure the database is open
-    await openDatabase();
+  // TODO: remove later: Clear existing data if needed
+  await clearDatabase();
 
-    // Optional: Clear existing data if needed
-    await clearDatabase();
-
-    // Fetch all history items
-    const historyItems = await new Promise((resolve, reject) => {
-      chrome.history.search({
-        text: '',
-        startTime: 0, // From the beginning
-        maxResults: 0 // Unlimited
-      }, (items) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(items);
-        }
-      });
-    });
-
-    // Process and store history items
-    await multiGenerateTagAndStore(historyItems);
-    console.log('Indexing of old data completed successfully.');
-  } catch (error) {
-    console.error('Error indexing old data:', error);
-  }
+  // Fetch all history items
+  continueIndexing();
+  return;
 }
 
-function continueIndexing() {
-    console.log("continue indexing");
 
-  // Clear existing database
-  openDatabase().then(() => {
+function continueIndexing() {
+    console.log("indexing now");
+
     // Fetch all history items
     chrome.history.search({
       text: '',
@@ -102,12 +62,8 @@ function continueIndexing() {
       maxResults: 0 // Unlimited
     }, async (historyItems) => {
       await multiGenerateTagAndStore(historyItems);
-    }).catch(error => {
-      console.error('Error indexing old data:', error);
+      console.log('Indexing of old data completed successfully.');
     });
-  });
-
-
 }
 
 // New: Listen for new history entries
@@ -116,7 +72,7 @@ chrome.history.onVisited.addListener(async (historyItem) => {
     const { url, title, lastVisitTime } = historyItem;
 
     // Generate tags for the new history entry
-    const tags = await generateTags(title || '', url);
+    const tags = await getTags(title || '', url);
 
     // TODO: generate summary
     const summary = "";
@@ -132,9 +88,8 @@ chrome.history.onVisited.addListener(async (historyItem) => {
     };
 
     // Add to database
-    await openDatabase();
     await addHistoryItem(newHistoryEntry);
-    console.log('New history item indexed:', newHistoryEntry.id);
+    console.log('New history item indexed');
 
   } catch (error) {
     console.error('Error indexing new history item:', error);
@@ -157,32 +112,12 @@ function getTotalHistoryCount() {
     });
 }
 
-// Function to get the count of indexed history items from IndexedDB
-function getIndexedHistoryCount() {
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['history'], 'readonly');
-        const objectStore = transaction.objectStore('history');
-        const countRequest = objectStore.count();
-
-        countRequest.onsuccess = () => {
-            resolve(countRequest.result);
-        };
-
-        countRequest.onerror = () => {
-            reject(countRequest.error);
-        };
-    });
-}
-
 async function updateIndexPercentage() {
     try {
-        // Ensure the database is open
-        await openDatabase();
-
         // Get total and indexed counts
         const [totalCount, indexedCount] = await Promise.all([
             getTotalHistoryCount(),
-            getIndexedHistoryCount()
+            getAllHistoryItems().then(items => items.length)
         ]);
 
         // Calculate percentage
@@ -214,8 +149,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'displaySummary') {
     chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
   } else if (request.action === 'continueIndexing') {
-    continueIndexing();
     sendResponse({ status: 'Indexing continued' });
+    continueIndexing();
+  } else if (request.action === 'refreshIndexPercentage') {
+    updateIndexPercentage().then(() => {
+      sendResponse({ status: 'Refresh % updated' });
+      }).catch(error => {
+        sendResponse({ status: 'Error', message: error.message });
+      });
+      return true;
   }
 });
 updateIndexPercentage();
