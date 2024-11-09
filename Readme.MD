@@ -7,6 +7,13 @@
     [ ] keep all host permission optional: maybe use external api if allowed to fetch content: later
     [X] default to indexing from title and url
     [ ] maybe use content indicators as used by google by doing a google search with the url, get the first result use it for context of summary
+[ ] use writer api for summary description generation, give it more context, maybe fetch from google metadata
+[ ] Maybe limit indexing to one month to start with: to fasten it up
+
+TODO: 9th Nov
+[ ] Store failed indexing keys to keep on retrying whenever available with a retry count, add batch processing too: add logic for continue indexing
+[X] Add logic to populate % indexing complete and add logic for refresh button
+
 
 
 ## Approach

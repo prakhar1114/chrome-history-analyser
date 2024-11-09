@@ -23,7 +23,7 @@ function openDatabase() {
       objectStore.createIndex('title', 'title', { unique: false });
       objectStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
       objectStore.createIndex('summary', 'summary', { unique: false });
-      objectStore.createIndex('lastVisitTime', 'lastVisitTime', { unique: false });
+      objectStore.createIndex('lastVisitTime', 'lastVisitTime', { unique: true });
       console.log("Database upgraded");
     };
 
@@ -55,15 +55,34 @@ function addHistoryItem(item) {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['history'], 'readwrite');
     const objectStore = transaction.objectStore('history');
-    const request = objectStore.put(item);
+    const index = objectStore.index('lastVisitTime');
 
-    request.onsuccess = () => {
-      console.log("History item added");
-      resolve();
+    // Check if an item with the same lastVisitTime already exists
+    const checkRequest = index.get(item.lastVisitTime);
+
+    checkRequest.onsuccess = (event) => {
+      if (event.target.result) {
+        // Item with the same lastVisitTime already exists
+        console.log("Item with the same lastVisitTime already exists, not adding.");
+        resolve(); // Resolve without adding
+      } else {
+        // No item with the same lastVisitTime, proceed to add
+        const request = objectStore.put(item);
+
+        request.onsuccess = () => {
+          console.log(`History item added: ${item.id}`);
+          resolve();
+        };
+
+        request.onerror = (event) => {
+          console.error('Error adding item:', event.target.errorCode);
+          reject(event.target.errorCode);
+        };
+      }
     };
 
-    request.onerror = (event) => {
-      console.error('Error adding item:', event.target.errorCode);
+    checkRequest.onerror = (event) => {
+      console.error('Error checking lastVisitTime:', event.target.errorCode);
       reject(event.target.errorCode);
     };
   });

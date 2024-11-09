@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  document.getElementById('continueIndexing').addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'continueIndexing' }, (response) => {
+      console.log(response.status);
+      alert('Indexing old data continued.');
+    });
+  });
+
   document.getElementById('searchBtn').addEventListener('click', () => {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if (query === '') {
@@ -44,6 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   });
+
+  document.getElementById("showDashboardBtn").addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "displaySummary" });
+  });
+
+  // fetch index percentage
+  chrome.storage.local.get('indexPercentage', (result) => {
+    document.getElementById('indexPercentage').textContent = `Indexed ${result.indexPercentage}% of history`;
+  });
+  
 });
 
 function displayResults(results) {
@@ -91,7 +108,3 @@ function displayResults(results) {
     }
   });
 }
-
-document.getElementById("showDashboardBtn").addEventListener("click", () => {
-  chrome.runtime.sendMessage({ action: "displaySummary" });
-});

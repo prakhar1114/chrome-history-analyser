@@ -94,3 +94,33 @@ button:hover {
     margin-top: 10px;
     gap: 10px;
 }
+
+/* New Styles for Indexed Status and Refresh Button */
+.index-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+}
+
+#indexPercentage {
+    font-size: 14px;
+    color: #555;
+}
+
+#refreshBtn {
+    padding: 6px 12px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#refreshBtn:hover {
+    background-color: #218838;
+}
