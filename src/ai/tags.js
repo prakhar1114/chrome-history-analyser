@@ -84,7 +84,7 @@ export async function getTags(title, url) {
         tags = await currentSession.prompt(refined_prompt);
     } catch (error) {
         console.log("Error generating tags:", error);
-        tags = "FAILED";
+        tags = "";
     }
     await currentSession.destroy();
     // TODO: might need writer, rewriter api to correct structure, sometimes it gives wrong structure
@@ -117,6 +117,9 @@ Given the following website URL and title, perform the following tasks:
 }
 
 function getTagsArray(tags) {
+    if (!tags) {
+        return []; // Return an empty array if tags is an empty string
+    }
     return tags.split(',').map(tag => tag.trim().toLowerCase());
 }
 

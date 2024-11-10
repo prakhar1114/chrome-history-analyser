@@ -17,6 +17,8 @@
 - [X] Add logic to populate % indexing complete and add logic for refresh button
 - [ ] Make index old data, continue indexing button: either one visible, decide on default continuous indexing :green_circle:
 - [X] Remove use of import scripts
+- [ ] make webpack for chrome extension
+- [ ] use fuzzy search for search
 
 
 
