@@ -1,12 +1,7 @@
-import { openDatabase } from '../utils/db.js';
+import { getSearchResults } from '../utils/search.js';
 import './popup-styles.css';
 
-let loaded_db;
-
-document.addEventListener('DOMContentLoaded', () => {
-  openDatabase().then((database) => {
-    loaded_db = database;
-  });
+document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('indexOldDataBtn').addEventListener('click', () => {
     // Send message to background script to index old data
@@ -31,36 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('searchBtn').addEventListener('click', () => {
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    if (query === '') {
-      alert('Please enter a search term.');
-      return;
-    }
+  document.getElementById('searchBtn').addEventListener('click', async () => {
 
-    // Search the database
-    const transaction = loaded_db.transaction(['history'], 'readonly');
-    const objectStore = transaction.objectStore('history');
-
-    const results = [];
-    objectStore.openCursor().onsuccess = (event) => {
-      const cursor = event.target.result;
-      if (cursor) {
-        const item = cursor.value;
-        const matches = (
-          (item.title && item.title.toLowerCase().includes(query)) ||
-          (item.summary && item.summary.toLowerCase().includes(query)) ||
-          (item.tags && Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(query)))
-        );
-        if (matches) {
-          results.push(item);
-        }
-        cursor.continue();
-      } else {
-        // Display results
-        displayResults(results);
-      }
-    };
+    const raw_query = document.getElementById('searchInput').value;
+    const results = await getSearchResults(raw_query);
+    displayResults(results);
   });
 
   document.getElementById("showDashboardBtn").addEventListener("click", () => {
@@ -85,7 +55,8 @@ function displayResults(results) {
   const scrollableContainer = document.createElement('div');
   scrollableContainer.className = 'scrollable-container';
 
-  results.forEach((item) => {
+  results.forEach((result_object) => {
+    const item = result_object.item;
     const itemDiv = document.createElement('div');
     itemDiv.className = 'result-item';
 
@@ -95,14 +66,15 @@ function displayResults(results) {
     title.target = '_blank';
 
     const tags = document.createElement('p');
-    tags.textContent = `Tags: ${item.tags.join(', ')}`;
+    tags.textContent = `Tags: ${Array.isArray(item.tags) && item.tags.length > 0 ? item.tags.join(', ') : 'None'}`;
 
-    const summary = document.createElement('p');
-    summary.textContent = `Summary: ${item.summary}`;
+    // TODO: fix when summary implemented
+    // const summary = document.createElement('p');
+    // summary.textContent = `Summary: ${item.summary}`;
 
     itemDiv.appendChild(title);
     itemDiv.appendChild(tags);
-    itemDiv.appendChild(summary);
+    // itemDiv.appendChild(summary);
 
     scrollableContainer.appendChild(itemDiv);
   });
