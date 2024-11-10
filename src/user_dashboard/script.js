@@ -1,4 +1,5 @@
 import { getSummarizer } from '../ai/summarizer.js';
+import './styles.css';
 let startDate, endDate;
 
 

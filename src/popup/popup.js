@@ -1,4 +1,5 @@
 import { openDatabase } from '../utils/db.js';
+import './popup-styles.css';
 
 let loaded_db;
 

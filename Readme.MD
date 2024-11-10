@@ -20,7 +20,9 @@
 - [ ] make webpack for chrome extension
 - [ ] use fuzzy search for search
 
-
+## General Notes
+- npm run dev: to run dev server to automatically update dist always
+- npm run build: to build the dist folder manually
 
 ## Approach
 

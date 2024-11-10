@@ -137,7 +137,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Indicates that the response is asynchronous
   } else if (request.action === 'displaySummary') {
-    chrome.tabs.create({ url: chrome.runtime.getURL("src/user_dashboard/index.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("user_dashboard.html") });
   } else if (request.action === 'continueIndexing') {
     sendResponse({ status: 'Indexing continued' });
     continueIndexing();
