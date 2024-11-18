@@ -11,7 +11,7 @@ export async function getSearchResults(raw_query) {
             'summary',
             { name: 'tags', weight: 0.5 }
         ],
-        threshold: 0.4
+        threshold: 0.2
     });
 
     const results = fuse.search(query);

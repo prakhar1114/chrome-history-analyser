@@ -65,7 +65,7 @@ chrome.history.onVisited.addListener(async (historyItem) => {
     // Generate tags for the new history entry
     const tags = await getTags(title || '', url);
 
-    // TODO: generate summary
+    // TODO: generate summary/ writer API
     const summary = "";
 
     // Create history entry object

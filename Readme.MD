@@ -18,32 +18,41 @@
 - [ ] Make index old data, continue indexing button: either one visible, decide on default continuous indexing :green_circle:
 - [X] Remove use of import scripts
 - [X] make webpack for chrome extension
-- [ ] use fuzzy search for search
+- [X] use fuzzy search for search
+
+### History Dashboard TODO:
+- [ ] Search history of the selected time : maybe histogram/ top items :green_circle:
+- [ ] The Text summary, should be of the selected time period, not the whole history :green_circle:
+
 
 ## General Notes
 - npm run dev: to run dev server to automatically update dist always
 - npm run build: to build the dist folder manually
 
-## Approach
+## Dashboard Idea
+1. Give me a summary of my browsing history for the last X days :red_circle:
+    - create a text summary
+    - can contain top 10 visited sites and the number of times visited
+    - create a word cloud of all tags associated with the history items
+    - counts of few common words like: entertainment, work, social and counts for them, "+"
+        - "+" sign allows users to add more words to the list
+        - the function should search these words within history items and give a count of how many times it appeared
+    - everything could be % since we have limited number of links hit
+2. Maybe compare this with other months :green_circle:
+3. Allow synonym search: check how google does it :green_circle:
+4. Allow multitag matching as AND or OR :yellow_circle:
+5. Crawling and indexing of website content :yellow_circle:
 
-Indexing:
-- Create a variable to track the last indexed time epoch and store it in chrome local storage, defaulting to null
-- create a button "Index Old Data": to dump existing db and index all history items
-    - while indexing older data just use url, and title
-    - generate tags and summary: use placeholder functions
-    - add a button to popup for this
-
-Generating summaries - Realtime:
-- Run background script to generate summary for the tab and keyword and add it to the database collection, maybe wherever allowed? (what about banking and all)
-    - use placeholder functions for generating summary and tags
-    - use different functions for realtime summary and tag generation and older data indexing
-- keep on updating last indexed time epoch
+Create a story around it:
+- it is getting more and more about giving the write context to the required places
+- This will help you generate context for you 
+- With access to your history, it can help you understanding yourself better
 
 
 # Announcement
 
 - [X] Announce on twitter and reddit and collect users for betatesting? on twitter just get design ideas and interest
-- [ ] maybe just showcase using a video 
+- [ ] maybe just showcase using a video
 
 
 # Features
