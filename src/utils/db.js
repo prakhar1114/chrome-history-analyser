@@ -154,3 +154,18 @@ function promisifyRequest(request) {
     request.onerror = () => reject(request.error);
   });
 }
+
+/**
+ * Input startdate and enddate, fetch all history items in that range, search within lastVisitTime index of the db  
+ */
+export async function getHistoryInTimeRange(startDate, endDate) {
+  await openDatabase();
+  const transaction = db.transaction(['history'], 'readonly');
+  const objectStore = transaction.objectStore('history');
+  const index = objectStore.index('lastVisitTime');
+  const range = IDBKeyRange.bound(startDate, endDate);
+  const request = index.getAll(range);  
+
+  const result = await promisifyRequest(request);
+  return result;
+}

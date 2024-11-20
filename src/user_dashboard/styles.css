@@ -7,6 +7,47 @@ body {
     overflow-y: scroll;
 }
 
+body.dark-mode {
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+}
+
+body.dark-mode .history-box {
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .history-header {
+    border-bottom: 1px solid #555;
+}
+
+body.dark-mode .history-header h3 {
+    color: #ecf0f1;
+}
+
+body.dark-mode .history-header p {
+    color: #bdc3c7;
+}
+
+body.dark-mode .titles-container a {
+    color: #9b59b6;
+}
+
+body.dark-mode .titles-container a:hover {
+    color: #8e44ad;
+    background-color: #34495e;
+}
+
+/* Update scrollbar for dark mode */
+body.dark-mode .scrollable-titles::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .scrollable-titles::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
 .date-range-container {
     display: flex;
     align-items: center;
@@ -128,6 +169,16 @@ a:hover {
     color: #0056b3;
 }
 
+a:focus {
+    outline: 2px dashed #2980b9;
+    outline-offset: 2px;
+}
+
+button:focus {
+    outline: 2px dashed #0056b3;
+    outline-offset: 2px;
+}
+
 .date-range-text {
     text-align: center;
     margin-bottom: 20px;
@@ -145,23 +196,23 @@ a:hover {
 #searchInput {
     width: 70%;
     padding: 5px;
-  }
-  
+}
+
 .result-item {
     border-bottom: 1px solid #ccc;
     padding: 10px 0;
 }
-  
+
 .result-item a {
     font-weight: bold;
     text-decoration: none;
     color: #1a0dab;
 }
-  
+
 .result-item a:hover {
     text-decoration: underline;
 }
-  
+
 .result-item p {
     margin: 5px 0;
     font-size: 14px;
@@ -177,4 +228,199 @@ a:hover {
 
 .result-item {
     margin-bottom: 10px;
+}
+
+/* Container for all history boxes */
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Individual history box */
+.history-box {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.history-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Header section with hostname and hit count */
+.history-header {
+    display: flex;
+    align-items: center; /* Vertically center the items */
+    justify-content: space-between; /* Distribute space between items */
+    margin-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;
+    transition: background-color 0.3s;
+}
+
+.history-header:hover {
+    background-color: #f9f9f9;
+}
+
+.history-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+}
+
+.history-header h3 i {
+    margin-right: 8px;
+    color: #3498db;
+}
+
+.history-header p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 1.1em; /* Increased font size */
+    font-weight: bold; /* Optional: Make it bold for emphasis */
+}
+
+.history-header p i {
+    margin-right: 5px;
+    color: #27ae60;
+}
+
+/* Titles container */
+.titles-container {
+    max-height: none; /* Remove fixed height */
+}
+
+/* Scrollable titles list with two columns */
+.scrollable-titles ul {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    grid-gap: 5px; /* Gap between grid items */
+}
+
+/* Remove list styles as before */
+.titles-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual title items adjustments for grid */
+.titles-container li {
+    margin-bottom: 2px; /* Further reduced spacing */
+    padding: 3px 5px; /* Tight padding */
+}
+
+/* Optional: Adjust the scrollable area height if needed */
+.scrollable-titles {
+    max-height: 200px; /* Adjust based on desired height */
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+    margin-top: 10px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    display: block; /* Ensure block display for grid */
+}
+
+/* Responsive adjustments for two columns */
+@media (max-width: 768px) {
+    .scrollable-titles ul {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+}
+
+/* Remove default list styles */
+.titles-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual title items */
+.titles-container li {
+    margin-bottom: 2px; /* Further reduced from 4px to 2px */
+    transition: background-color 0.2s;
+    border-radius: 4px;
+    padding: 3px 5px; /* Reduced padding for a tighter layout */
+}
+
+.titles-container li:hover {
+    background-color: #f9f9f9;
+}
+
+/* Title links */
+.titles-container a {
+    color: #2980b9;
+    text-decoration: none;
+    font-size: 0.95em; /* Slightly reduced font size */
+    display: block;
+    padding: 3px 5px; /* Reduced padding */
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.titles-container a:hover {
+    background-color: #ecf0f1;
+    color: #1c5980;
+}
+
+/* More indicator */
+.scrollable-titles p {
+    margin-top: 10px;
+    font-style: italic;
+    color: #95a5a6;
+    text-align: right;
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .history-box {
+        padding: 15px;
+    }
+
+    .history-header h3 {
+        font-size: 1.2em;
+    }
+
+    .history-header p {
+        font-size: 1em; /* Adjusted for better readability */
+    }
+
+    .titles-container a {
+        font-size: 0.9em;
+        padding: 2px 4px;
+    }
+
+    .scrollable-titles {
+        max-height: 180px;
+    }
+
+    .titles-container li {
+        margin-bottom: 2px; /* Ensure reduced spacing on smaller screens */
+        padding: 2px 4px;
+    }
+}
+
+/* Smooth scrollbar for better aesthetics */
+.scrollable-titles::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable-titles::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.scrollable-titles::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.05);
 }

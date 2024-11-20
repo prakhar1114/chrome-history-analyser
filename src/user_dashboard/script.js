@@ -1,4 +1,7 @@
 import { getSummarizer } from '../ai/summarizer.js';
+import { getHistory, getHistoryWithTopNStats } from './history.js';
+import { enableResizing, createOrGetWidget } from './widgets.js';
+import { extractDomain, markdownToHtml } from './utils.js';
 import './styles.css';
 let startDate, endDate;
 
@@ -13,6 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
   
     document.getElementById('refresh-button').addEventListener('click', () => {
       loadContent();
+    });
+
+    document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        // Optional: Save user preference using localStorage
+        if (document.body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+        } else {
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // Apply saved theme on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
     });
   });
 
@@ -136,7 +157,7 @@ function addOrUpdateRecentHistoryWidget() {
   const newWidget = createOrGetWidget('recent-history', 'Recent History');
 
   // delete chidlren containing *contents*
-  while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('contents')) {
+  while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('recent-history-contents')) {
       newWidget.removeChild(newWidget.lastChild);
   }
 
@@ -158,160 +179,83 @@ function addOrUpdateBasicSummaryWidget() {
   });
 }
 
-function createOrGetWidget(uniqueID, widgetTitle) {
-  if (document.getElementById(uniqueID)) {
-    return document.getElementById(uniqueID);
-  }
-
-  const widgetContainer = document.querySelector('.widget-container');
-
-  // Create a new widget element
-  const newWidget = document.createElement('div');
-  newWidget.className = 'widget resizable';
-
-  // Generate a unique ID for the new widget
-  newWidget.id = uniqueID;
-
-  // Set the content of the new widget
-  newWidget.innerHTML = `
-      <div class="widget-header">
-          <h2>${widgetTitle}</h2>
-          <div class="resize-handle"></div>
-      </div>
-  `;
-
-  // Append the new widget to the widget container
-  widgetContainer.appendChild(newWidget);
-
-  return newWidget;
-}
-
-
 /* Load Content Based on Date Range */
 function loadContent() {
   addOrUpdateRecentHistoryWidget();
   addOrUpdateBasicSummaryWidget();
 }
 
-/* Enable Resizing */
-function enableResizing() {
-  const resizableElements = document.querySelectorAll('.resizable');
-
-  resizableElements.forEach(element => {
-    const resizeHandle = element.querySelector('.resize-handle');
-    let isResizing = false;
-
-    resizeHandle.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      isResizing = true;
-      document.body.style.cursor = 'se-resize';
-      element.classList.add('resizing');
-
-      const startWidth = element.offsetWidth;
-      const startHeight = element.offsetHeight;
-      const startX = e.clientX;
-      const startY = e.clientY;
-
-      const onMouseMove = (e) => {
-        if (!isResizing) return;
-
-        const currentWidth = startWidth + (e.clientX - startX);
-        const currentHeight = startHeight + (e.clientY - startY);
-
-        // Set minimum dimensions
-        const minWidth = 200;
-        const minHeight = 100;
-
-        element.style.width = `${Math.max(currentWidth, minWidth)}px`;
-        element.style.height = `${Math.max(currentHeight, minHeight)}px`;
-      };
-
-      const onMouseUp = () => {
-        isResizing = false;
-        document.body.style.cursor = 'default';
-        element.classList.remove('resizing');
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-
-        // Save dimensions
-        saveWidgetSize(element.id, element.style.width, element.style.height);
-      };
-
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    });
-
-    // Load saved dimensions
-    loadWidgetSize(element.id, element);
-  });
-}
-
-/* Save Widget Size */
-function saveWidgetSize(widgetId, width, height) {
-  const size = { width, height };
-  if (chrome && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.set({ [widgetId]: size }, () => {
-      console.log(`Saved size for ${widgetId}:`, size);
-    });
-  } else {
-    // For testing outside of Chrome extension
-    localStorage.setItem(widgetId, JSON.stringify(size));
-  }
-}
-
-/* Load Widget Size */
-function loadWidgetSize(widgetId, element) {
-  if (chrome && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(widgetId, (result) => {
-      if (result[widgetId]) {
-        element.style.width = result[widgetId].width;
-        element.style.height = result[widgetId].height;
-      }
-    });
-  } else {
-    // For testing outside of Chrome extension
-    const size = JSON.parse(localStorage.getItem(widgetId));
-    if (size) {
-      element.style.width = size.width;
-      element.style.height = size.height;
-    }
-  }
-}
-
-function getHistory(numResults) {
-  // generate some random text: TODO fix this later to do better indexing
-  const randomText = String.fromCharCode(97 + Math.floor(Math.random() * 26));
-
-  return new Promise((resolve, reject) => {
-    chrome.history.search({ text: randomText, maxResults: numResults, startTime: startDate.getTime(), endTime: endDate.getTime() }, (results) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        console.log(results);
-        resolve(results);
-      }
-    });
-  });
-}
-
 async function createRecentHistoryElement() {
-  // get history from getHistory function and create a widget with the history items
-  // TODO: get a number of items from somewhere
-  return getHistory(10).then((historyItems) => {
-    const list = document.createElement('ul');
-    list.id = 'recent-history-contents';
-    historyItems.forEach(item => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a href="${item.url}" target="_blank">${item.title || extractDomain(item.url)}</a>`;
-      list.appendChild(li);
+  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
+  const container = document.createElement('div');
+  container.className = 'history-container';
+  container.id = 'recent-history-contents';
+
+  topNHostnamesWithTitles.forEach(item => {
+    // Create the main box for each hostname
+    const box = document.createElement('div');
+    box.className = 'history-box';
+
+    // First part: Hostname and hit count with an icon
+    const header = document.createElement('div');
+    header.className = 'history-header';
+
+    const hostname = document.createElement('h3');
+    // Add an icon before the hostname
+    hostname.innerHTML = `<i class="fas fa-globe-americas"></i> ${item.hostname}`;
+
+    const hitCount = document.createElement('p');
+    hitCount.innerHTML = `<i class="fas fa-chart-line"></i> Hit Count: ${item.count}`;
+
+    header.appendChild(hostname);
+    header.appendChild(hitCount);
+
+    // Second part: Titles with URLs
+    const titlesContainer = document.createElement('div');
+    titlesContainer.className = 'titles-container';
+
+    const titlesList = document.createElement('ul');
+
+    // Display top 10 titles
+    const topTitles = item.titles.slice(0, 10);
+    topTitles.forEach(titleItem => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = titleItem.url;
+      link.textContent = titleItem.title;
+      link.target = '_blank';
+      listItem.appendChild(link);
+      titlesList.appendChild(listItem);
     });
-    return list;
+
+    // If there are more than 10 titles, make the list scrollable
+    if (item.titles.length > 10) {
+      const moreCount = item.titles.length - 10;
+      const scrollable = document.createElement('div');
+      scrollable.className = 'scrollable-titles';
+      scrollable.appendChild(titlesList);
+
+      const moreIndicator = document.createElement('p');
+      moreIndicator.textContent = `and ${moreCount} more...`;
+      scrollable.appendChild(moreIndicator);
+
+      titlesContainer.appendChild(scrollable);
+    } else {
+      titlesContainer.appendChild(titlesList);
+    }
+
+    // Assemble the box
+    box.appendChild(header);
+    box.appendChild(titlesContainer);
+    container.appendChild(box);
   });
+
+  return container;
 }
 
 async function createBasicSummaryElement() {
   // TODO: get a number of items from somewhere
-  const historyItems = await getHistory(40);
+  const historyItems = await getHistory(startDate, endDate);
   console.log(historyItems);
   const textElement = document.createElement('p');
   textElement.id = 'basic-summary-contents';
@@ -327,26 +271,4 @@ async function createBasicSummaryElement() {
   textElement.innerHTML = markdownToHtml(result);
 
   return textElement;
-}
-
-// write a function to extract domain name from a url
-function extractDomain(url) {
-  return new URL(url).hostname;
-}
-
-
-function markdownToHtml(markdownText) {
-  // Convert bold text: **text**
-  let html = markdownText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  
-  // Convert italic text: *text*
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  
-  // Convert bullet points: * item
-  html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-  
-  // Wrap list items in <ul> tags
-  html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
-
-  return html;
 }

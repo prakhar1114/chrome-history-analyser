@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@huggingface/transformers": "^3.0.2",
     "fuse.js": "^7.0.0"
   },
   "name": "chrome-history-analyser",
