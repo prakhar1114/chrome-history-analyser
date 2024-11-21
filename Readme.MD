@@ -28,6 +28,7 @@
 - [ ] Rewrite summary to be visually appealingg and useful :red_circle:
 - [ ] Write, Rewrite API for summary :yellow_circle:
 - [ ] Embedding search for history items :green_circle:
+- [ ] Generate multiple embeddings for each history item and use them for search
 
 ## General Notes
 - npm run dev: to run dev server to automatically update dist always

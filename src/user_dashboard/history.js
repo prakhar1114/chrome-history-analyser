@@ -62,7 +62,7 @@ example titles:
 {title: 'super resolution model online free - Google Search', url: 'https://www.google.com/search?q=super+resolution+m…FmAMAiAYBkAYIkgcEMi4xM6AHklk&sclient=gws-wiz-serp'}
  */
 
-export async function getHistoryWithTopNStats(startDate, endDate, N) {
+export async function getHistoryWithTopNStats(startDate, endDate, N, selectedFilters) {
     const historyItems = await getHistoryInTimeRange(startDate.getTime(), endDate.getTime());
     const parsedHistoryItems = historyItems.map(item => parse_url_part(item.url, item.title));
     const hostnameMap = count_by_hostname(parsedHistoryItems);
