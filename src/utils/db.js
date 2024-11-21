@@ -108,8 +108,6 @@ export async function getAllHistoryItems() {
   });
 }
 
-
-
 /**
  * Checks if a history item with the specified lastVisitTime exists in the IndexedDB.
  * @param {number} lastVisitTime - The last visit time of the history item.
@@ -156,7 +154,7 @@ function promisifyRequest(request) {
 }
 
 /**
- * Input startdate and enddate, fetch all history items in that range, search within lastVisitTime index of the db  
+ * Input startDate and endDate, fetch all history items in that range, search within lastVisitTime index of the db  
  */
 export async function getHistoryInTimeRange(startDate, endDate) {
   await openDatabase();

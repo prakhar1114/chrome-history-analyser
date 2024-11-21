@@ -3,7 +3,7 @@ import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget } from './widgets.js';
 import { extractDomain, markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
-let startDate, endDate;
+let startDate, endDate, topNHostnamesWithTitles;
 
 // Global variable to store selected filters
 let selectedFilters = [];
@@ -188,7 +188,7 @@ async function loadContent() {
 }
 
 async function createRecentHistoryElement() {
-  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters);
+  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -255,7 +255,7 @@ async function createRecentHistoryElement() {
     box.appendChild(titlesContainer);
     container.appendChild(box);
   });
-
+  console.log("updated recent history");
   return container;
 }
 

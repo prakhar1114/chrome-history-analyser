@@ -1,4 +1,5 @@
 import { getHistoryInTimeRange } from '../utils/db.js';
+import { getFilteredHistoryItems } from '../utils/search.js';
 
 async function getHistory(startDate, endDate) {
 
@@ -64,7 +65,8 @@ example titles:
 
 export async function getHistoryWithTopNStats(startDate, endDate, N, selectedFilters) {
     const historyItems = await getHistoryInTimeRange(startDate.getTime(), endDate.getTime());
-    const parsedHistoryItems = historyItems.map(item => parse_url_part(item.url, item.title));
+    const filteredHistoryItems = getFilteredHistoryItems(historyItems, selectedFilters);
+    const parsedHistoryItems = filteredHistoryItems.map(item => parse_url_part(item.url, item.title));
     const hostnameMap = count_by_hostname(parsedHistoryItems);
     const hostnameTitleMap = createHostNameTitleMap(parsedHistoryItems);
     const sortedHostnames = Array.from(hostnameMap.entries()).sort((a, b) => b[1] - a[1]);
