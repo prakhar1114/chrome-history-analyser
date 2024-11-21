@@ -15,16 +15,19 @@
 
 - [X] Store failed indexing keys to keep on retrying whenever available with a retry count, add batch processing too: add logic for continue indexing
 - [X] Add logic to populate % indexing complete and add logic for refresh button
-- [ ] Make index old data, continue indexing button: either one visible, decide on default continuous indexing :green_circle:
+- [ ] Make index old data, continue indexing button: either one visible, decide on default continuous indexing, Make a button to pause and play indexing last 3 months history :yellow_circle:
 - [X] Remove use of import scripts
 - [X] make webpack for chrome extension
 - [X] use fuzzy search for search
 
 ### History Dashboard TODO:
-- [ ] Search history of the selected time : maybe histogram/ top items :green_circle:
-- [ ] The Text summary, should be of the selected time period, not the whole history :green_circle:
+- [X] Search history of the selected time : maybe histogram/ top items :green_circle:
+- [X] The Text summary, should be of the selected time period, not the whole history :green_circle:
 - [ ] More specific tags
-
+- [ ] Filter by tags, exclude filters :red_circle:
+- [ ] Rewrite summary to be visually appealingg and useful :red_circle:
+- [ ] Write, Rewrite API for summary :yellow_circle:
+- [ ] Embedding search for history items :green_circle:
 
 ## General Notes
 - npm run dev: to run dev server to automatically update dist always

@@ -22,4 +22,16 @@ async function getSummarizer() {
     return summarizer;
 }
 
-export { getSummarizer };
+async function summarize(text) {
+    try {
+        const summarizer = await getSummarizer();
+        const result = await summarizer.summarize(text);
+        await summarizer.destroy();
+        return result;
+    } catch (error) {
+        console.log('Error during summarization:', error);
+        return '';
+    }
+}
+
+export { summarize };

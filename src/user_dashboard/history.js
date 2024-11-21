@@ -1,6 +1,6 @@
 import { getHistoryInTimeRange } from '../utils/db.js';
 
-export async function getHistory(startDate, endDate) {
+async function getHistory(startDate, endDate) {
 
     return new Promise((resolve, reject) => {
       chrome.history.search({text: '', startTime: startDate.getTime(), endTime: endDate.getTime(), maxResults: 40 }, (results) => {

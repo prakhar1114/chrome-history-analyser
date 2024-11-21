@@ -1,4 +1,4 @@
-// Initialize a single AI session
+import { cleanInput } from '../user_dashboard/utils.js';
 let aiSession = null;
 
 /**
@@ -65,7 +65,7 @@ async function getPromptAPISession() {
  * @returns {Promise<string[]>} - An array of tag strings.
  */
 export async function getTags(title, url) {
-    const refined_prompt = createRefinedPrompt(sanitizeUrl(url), title);
+    const refined_prompt = createRefinedPrompt(sanitizeUrl(url), cleanInput(title));
     const session = await getPromptAPISession();
     let currentSession;
     try {

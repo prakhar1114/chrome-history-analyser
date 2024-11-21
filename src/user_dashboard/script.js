@@ -1,13 +1,12 @@
-import { getSummarizer } from '../ai/summarizer.js';
-import { getHistory, getHistoryWithTopNStats } from './history.js';
+import { summarize } from '../ai/summarizer.js';
+import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget } from './widgets.js';
-import { extractDomain, markdownToHtml } from './utils.js';
+import { extractDomain, markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
 let startDate, endDate;
-let topNHostnamesWithTitles;
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     addDateRangeButtons();
     addRefreshButton();
     setDateRange('24h');
@@ -154,7 +153,7 @@ function setDateRange(range) {
   
 
   /* Add Overall Summary Widget */
-function addOrUpdateRecentHistoryWidget() {
+async function addOrUpdateRecentHistoryWidget() {
   const newWidget = createOrGetWidget('recent-history', 'Recent History');
 
   // delete chidlren containing *contents*
@@ -167,7 +166,7 @@ function addOrUpdateRecentHistoryWidget() {
   });
 }
 
-function addOrUpdateBasicSummaryWidget() {
+async function addOrUpdateBasicSummaryWidget() {
   const newWidget = createOrGetWidget('basic-summary', 'Summary');
 
   // delete chidlren containing *contents*
@@ -175,9 +174,7 @@ function addOrUpdateBasicSummaryWidget() {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  createBasicSummaryElement().then((widget) => {
-      newWidget.appendChild(widget);
-  });
+  await createBasicSummaryElement(newWidget);
 }
 
 /* Load Content Based on Date Range */
@@ -187,7 +184,7 @@ function loadContent() {
 }
 
 async function createRecentHistoryElement() {
-  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
+  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -258,24 +255,32 @@ async function createRecentHistoryElement() {
   return container;
 }
 
-async function createBasicSummaryElement() {
-  // TODO: get a number of items from somewhere
-  const historyItems = await getHistory(startDate, endDate);
-  console.log(historyItems);
-  const textElement = document.createElement('p');
-  textElement.id = 'basic-summary-contents';
+async function createBasicSummaryElement(newWidget) {
+  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
+  const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
-  const historyItemTitles = historyItems.map(item => item.title || extractDomain(item.url)).join('\n');
+  // append all history items to a single string
+  const historyItemTitles = historyItems.map(item => item.title).join(',');
 
-  const summarizer = await getSummarizer();
-  const result = await summarizer.summarize(historyItemTitles);
-  console.log(result);
+  // d
 
-  // update the text content of the text element
-  // textElement.textContent = result;
-  textElement.innerHTML = markdownToHtml(result);
+  // create chunks of 4000 characters
+  const chunks = [];
+  for (let i = 0; i < historyItemTitles.length; i += 2000) {
+    chunks.push(historyItemTitles.slice(i, i + 2000));
+  }
 
-  return textElement;
+  // one by one summarize each chunk and append to the result
+  for (const chunk of chunks) {
+    console.log(`summarizing chunk ${chunk}`);
+    let result = await summarize(cleanInput(chunk));
+
+    let textElement = document.createElement('p');
+    textElement.id = 'basic-summary-contents';
+
+    textElement.innerHTML = markdownToHtml(result);
+    newWidget.appendChild(textElement);
+  }
 }
 
 function loadMoreTitles(item, titlesList, moreButton, initialCount, loadCount) {
