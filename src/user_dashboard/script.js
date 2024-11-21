@@ -4,6 +4,7 @@ import { enableResizing, createOrGetWidget } from './widgets.js';
 import { extractDomain, markdownToHtml } from './utils.js';
 import './styles.css';
 let startDate, endDate;
+let topNHostnamesWithTitles;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -186,7 +187,7 @@ function loadContent() {
 }
 
 async function createRecentHistoryElement() {
-  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
+  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -216,9 +217,13 @@ async function createRecentHistoryElement() {
 
     const titlesList = document.createElement('ul');
 
-    // Display top 10 titles
-    const topTitles = item.titles.slice(0, 10);
-    topTitles.forEach(titleItem => {
+    // Initial display count
+    const initialDisplayCount = 10;
+    const additionalLoadCount = 20;
+
+    // Determine how many titles to show initially
+    const displayedTitles = item.titles.slice(0, initialDisplayCount);
+    displayedTitles.forEach(titleItem => {
       const listItem = document.createElement('li');
       const link = document.createElement('a');
       link.href = titleItem.url;
@@ -228,20 +233,20 @@ async function createRecentHistoryElement() {
       titlesList.appendChild(listItem);
     });
 
-    // If there are more than 10 titles, make the list scrollable
-    if (item.titles.length > 10) {
-      const moreCount = item.titles.length - 10;
-      const scrollable = document.createElement('div');
-      scrollable.className = 'scrollable-titles';
-      scrollable.appendChild(titlesList);
+    titlesContainer.appendChild(titlesList);
 
-      const moreIndicator = document.createElement('p');
-      moreIndicator.textContent = `and ${moreCount} more...`;
-      scrollable.appendChild(moreIndicator);
+    // If there are more titles, add a "more" button
+    if (item.titles.length > initialDisplayCount) {
+      const moreButton = document.createElement('button');
+      moreButton.className = 'more-button';
+      moreButton.textContent = `and ${item.titles.length - initialDisplayCount} more...`;
+      moreButton.dataset.hostname = item.hostname; // For identifying which box to expand
 
-      titlesContainer.appendChild(scrollable);
-    } else {
-      titlesContainer.appendChild(titlesList);
+      moreButton.addEventListener('click', () => {
+        loadMoreTitles(item, titlesList, moreButton, initialDisplayCount, additionalLoadCount);
+      });
+
+      titlesContainer.appendChild(moreButton);
     }
 
     // Assemble the box
@@ -271,4 +276,31 @@ async function createBasicSummaryElement() {
   textElement.innerHTML = markdownToHtml(result);
 
   return textElement;
+}
+
+function loadMoreTitles(item, titlesList, moreButton, initialCount, loadCount) {
+  // Determine the current number of titles displayed
+  const currentCount = titlesList.querySelectorAll('li').length;
+  const nextCount = currentCount + loadCount;
+  const titlesToAdd = item.titles.slice(currentCount, nextCount);
+
+  titlesToAdd.forEach(titleItem => {
+    const listItem = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = titleItem.url;
+    link.textContent = titleItem.title;
+    link.target = '_blank';
+    listItem.appendChild(link);
+    titlesList.appendChild(listItem);
+  });
+
+  // Update the remaining count
+  const remaining = item.titles.length - nextCount;
+
+  if (remaining > 0) {
+    moreButton.textContent = `and ${remaining} more...`;
+  } else {
+    // Remove the "more" button if no more titles are left
+    moreButton.remove();
+  }
 }

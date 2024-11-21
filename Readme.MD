@@ -23,6 +23,7 @@
 ### History Dashboard TODO:
 - [ ] Search history of the selected time : maybe histogram/ top items :green_circle:
 - [ ] The Text summary, should be of the selected time period, not the whole history :green_circle:
+- [ ] More specific tags
 
 
 ## General Notes

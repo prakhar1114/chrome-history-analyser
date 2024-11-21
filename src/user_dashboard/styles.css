@@ -87,7 +87,7 @@ body.dark-mode .scrollable-titles::-webkit-scrollbar-thumb {
 .widget-container {
     display: flex;
     /* flex-direction: column; */
-    align-items: center;
+    /* align-items: center; */
     padding: 20px;
 }
 
@@ -298,6 +298,7 @@ button:focus {
 /* Titles container */
 .titles-container {
     max-height: none; /* Remove fixed height */
+    position: relative;
 }
 
 /* Scrollable titles list with two columns */
@@ -423,4 +424,27 @@ button:focus {
 
 .scrollable-titles::-webkit-scrollbar-track {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Style for the "more" button */
+.more-button {
+    background: none;
+    border: none;
+    color: #2980b9;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 5px 0;
+    text-align: right;
+    display: block;
+    transition: color 0.3s;
+}
+
+.more-button:hover {
+    color: #1c5980;
+    text-decoration: underline;
+}
+
+.more-button:disabled {
+    color: #95a5a6;
+    cursor: not-allowed;
 }
