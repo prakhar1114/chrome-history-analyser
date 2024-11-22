@@ -18,22 +18,47 @@ export async function getSearchResults(raw_query) {
     return results;
 }
 
-export function getFilteredHistoryItems(historyItems, selectedFilters) {
-    if (!selectedFilters || selectedFilters.length === 0) {
-        return historyItems;
+export function getFilteredHistoryItems(historyItems, selectedFilters, excludeFilters) {
+    // Start with all history items
+    let filteredItems = historyItems;
+
+    // Apply inclusion filters if any
+    if (selectedFilters && selectedFilters.length > 0) {
+        const lowerCaseSelectedFilters = selectedFilters.map(filter => filter.toLowerCase());
+
+        filteredItems = filteredItems.filter(item => {
+            const title = item.title ? item.title.toLowerCase() : '';
+            const summary = item.summary ? item.summary.toLowerCase() : '';
+            const tags = item.tags ? item.tags.map(tag => tag.toLowerCase()) : [];
+            const url = item.url ? item.url.toLowerCase() : '';
+
+            return lowerCaseSelectedFilters.some(filter => 
+                title.includes(filter) ||
+                summary.includes(filter) ||
+                tags.includes(filter) ||
+                url.includes(filter)
+            );
+        });
     }
 
-    const lowerCaseFilters = selectedFilters.map(filter => filter.toLowerCase());
+    // Apply exclusion filters if any
+    if (excludeFilters && excludeFilters.length > 0) {
+        const lowerCaseExcludeFilters = excludeFilters.map(filter => filter.toLowerCase());
 
-    return historyItems.filter(item => {
-        const title = item.title ? item.title.toLowerCase() : '';
-        const summary = item.summary ? item.summary.toLowerCase() : '';
-        const tags = item.tags ? item.tags.map(tag => tag.toLowerCase()) : [];
+        filteredItems = filteredItems.filter(item => {
+            const title = item.title ? item.title.toLowerCase() : '';
+            const summary = item.summary ? item.summary.toLowerCase() : '';
+            const tags = item.tags ? item.tags.map(tag => tag.toLowerCase()) : [];
+            const url = item.url ? item.url.toLowerCase() : '';
 
-        return lowerCaseFilters.some(filter => 
-            title.includes(filter) ||
-            summary.includes(filter) ||
-            tags.includes(filter)
-        );
-    });
+            return !lowerCaseExcludeFilters.some(filter => 
+                title.includes(filter) ||
+                summary.includes(filter) ||
+                tags.includes(filter) ||
+                url.includes(filter)
+            );
+        });
+    }
+
+    return filteredItems;
 }

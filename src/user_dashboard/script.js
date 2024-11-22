@@ -5,15 +5,16 @@ import { extractDomain, markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
 let startDate, endDate, topNHostnamesWithTitles;
 
-// Global variable to store selected filters
+// Global variables to store selected filters
 let selectedFilters = [];
+let excludeFilters = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     addDateRangeButtons();
     addRefreshButton();
     setDateRange('24h');
-    // Initialize category filters
-    await initializeCategoryFilters();
+    // Initialize category and exclude filters
+    await initializeFilters();
     addOrUpdateRecentHistoryWidget();
     addOrUpdateBasicSummaryWidget();
     enableResizing();
@@ -49,7 +50,7 @@ function addRefreshButton() {
   const container = document.querySelector('.date-range-container');
   container.appendChild(refreshButton);
 }
-  
+
 /* Initialize Date Range Inputs */
 function addDateRangeButtons() {
   
@@ -96,7 +97,6 @@ function addDateRangeButtons() {
   });
 }
 
-
 function setDateRange(range) {
   const today = new Date();
 
@@ -127,39 +127,27 @@ function setDateRange(range) {
           endDate = today;
           break;
       case 'jan':
-          startDate = new Date(today.getFullYear(), 0, 1);
-          endDate = new Date(today.getFullYear(), 1, 0);
-          break;
       case 'feb':
-          startDate = new Date(today.getFullYear(), 1, 1);
-          endDate = new Date(today.getFullYear(), 2, 0);
-          break;
       case 'mar':
-          startDate = new Date(today.getFullYear(), 2, 1);
-          endDate = new Date(today.getFullYear(), 3, 0);
+          const monthMap = { jan: 0, feb: 1, mar: 2 };
+          startDate = new Date(today.getFullYear(), monthMap[range], 1);
+          endDate = new Date(today.getFullYear(), monthMap[range] + 1, 0);
           break;
       default:
-          startDate = today;
+          startDate = new Date(today);
           endDate = today;
   }
 
-  const formatDate = (date) => {
-      const year = date.getFullYear();
-      const month = ('0' + (date.getMonth() + 1)).slice(-2);
-      const day = ('0' + date.getDate()).slice(-2);
-      return `${year}-${month}-${day}`;
-  };
-
-  document.getElementById('display-start-date').textContent = formatDate(startDate);
-  document.getElementById('display-end-date').textContent = formatDate(endDate);
+  // Update display dates
+  document.getElementById('display-start-date').textContent = startDate.toLocaleDateString();
+  document.getElementById('display-end-date').textContent = endDate.toLocaleDateString();
 }
-  
 
-  /* Add Overall Summary Widget */
+/* Add Overall Summary Widget */
 async function addOrUpdateRecentHistoryWidget() {
   const newWidget = createOrGetWidget('recent-history', 'Recent History');
 
-  // delete children containing *contents*
+  // delete children containing *recent-history-contents*
   while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('recent-history-contents')) {
       newWidget.removeChild(newWidget.lastChild);
   }
@@ -182,13 +170,14 @@ async function addOrUpdateBasicSummaryWidget() {
 
 /* Load Content Based on Date Range */
 async function loadContent() {
-  console.log(selectedFilters);
-  addOrUpdateRecentHistoryWidget();
-  addOrUpdateBasicSummaryWidget();
+  console.log('Selected Filters:', selectedFilters);
+  console.log('Exclude Filters:', excludeFilters);
+  await addOrUpdateRecentHistoryWidget();
+  await addOrUpdateBasicSummaryWidget();
 }
 
 async function createRecentHistoryElement() {
-  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters);
+  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -255,16 +244,16 @@ async function createRecentHistoryElement() {
     box.appendChild(titlesContainer);
     container.appendChild(box);
   });
-  console.log("updated recent history");
+
   return container;
 }
 
 async function createBasicSummaryElement(newWidget) {
-  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters);
+  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
   // Append all history items to a single string
-  const historyItemTitles = historyItems.map(item => item.title).join(',');
+  const historyItemTitles = historyItems.map(item => item.title).join(', ');
 
   // Create chunks of 4000 characters
   const chunks = [];
@@ -311,7 +300,13 @@ function loadMoreTitles(item, titlesList, moreButton, initialCount, loadCount) {
   }
 }
 
-// Function to initialize category filters
+/* Initialize Filters (Tag Filters and Exclude Tags) */
+async function initializeFilters() {
+    await initializeCategoryFilters();
+    await initializeExcludeFilters();
+}
+
+/* Initialize Tag Filters */
 async function initializeCategoryFilters() {
     const defaultFilters = ['Code', 'Productivity', 'AI', 'Entertainment', 'Social'];
     const customFilters = await getCustomFilters();
@@ -319,15 +314,30 @@ async function initializeCategoryFilters() {
     const allFilters = [...defaultFilters, ...customFilters];
 
     allFilters.forEach(filter => {
-        createToggleButton(filter, defaultFilters.includes(filter));
+        createToggleButton(filter, false, 'category-filters');
     });
 
     // Load selected filters from storage
     selectedFilters = await getSelectedFilters();
-    updateFilterStates();
+    updateFilterStates('category-filters');
 }
 
-// Function to get custom filters from Chrome storage
+/* Initialize Exclude Filters */
+async function initializeExcludeFilters() {
+    const customExcludeFilters = await getCustomExcludeFilters();
+
+    customExcludeFilters.forEach(filter => {
+        createToggleButton(filter, false, 'exclude-filters');
+    });
+
+    // Load selected exclude filters from storage
+    excludeFilters = await getSelectedExcludeFilters();
+    updateFilterStates('exclude-filters');
+}
+
+/* Functions for Category Filters */
+
+/* Function to get custom filters from Chrome storage */
 function getCustomFilters() {
     return new Promise((resolve) => {
         chrome.storage.local.get(['customFilters'], (result) => {
@@ -336,7 +346,7 @@ function getCustomFilters() {
     });
 }
 
-// Function to get selected filters from Chrome storage
+/* Function to get selected filters from Chrome storage */
 function getSelectedFilters() {
     return new Promise((resolve) => {
         chrome.storage.local.get(['selectedFilters'], (result) => {
@@ -345,23 +355,58 @@ function getSelectedFilters() {
     });
 }
 
-// Function to save selected filters to Chrome storage
+/* Function to save selected filters to Chrome storage */
 function saveSelectedFilters() {
     chrome.storage.local.set({ selectedFilters }, () => {
         console.log('Selected filters saved:', selectedFilters);
     });
 }
 
-// Function to save custom filters to Chrome storage
+/* Function to save custom filters to Chrome storage */
 function saveCustomFilters(customFilters) {
     chrome.storage.local.set({ customFilters }, () => {
         console.log('Custom filters saved:', customFilters);
     });
 }
 
-// Function to create a toggle button
-function createToggleButton(label, isDefault = false) {
-    const container = document.getElementById('category-filters');
+/* Functions for Exclude Filters */
+
+/* Function to get custom exclude filters from Chrome storage */
+function getCustomExcludeFilters() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['customExcludeFilters'], (result) => {
+            resolve(result.customExcludeFilters || []);
+        });
+    });
+}
+
+/* Function to get selected exclude filters from Chrome storage */
+function getSelectedExcludeFilters() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['selectedExcludeFilters'], (result) => {
+            resolve(result.selectedExcludeFilters || []);
+        });
+    });
+}
+
+/* Function to save selected exclude filters to Chrome storage */
+function saveSelectedExcludeFilters() {
+    chrome.storage.local.set({ selectedExcludeFilters: excludeFilters }, () => {
+        console.log('Selected exclude filters saved:', excludeFilters);
+    });
+}
+
+/* Function to save custom exclude filters to Chrome storage */
+function saveCustomExcludeFilters(customExcludeFilters) {
+    chrome.storage.local.set({ customExcludeFilters }, () => {
+        console.log('Custom exclude filters saved:', customExcludeFilters);
+    });
+}
+
+/* Function to create a toggle button */
+function createToggleButton(label, isDefault = false, filterType = 'category-filters') {
+    const containerId = filterType === 'exclude-filters' ? 'exclude-filters' : 'category-filters';
+    const container = document.getElementById(containerId);
 
     const button = document.createElement('button');
     button.className = 'category-toggle-button';
@@ -369,93 +414,170 @@ function createToggleButton(label, isDefault = false) {
     button.dataset.label = label;
     button.dataset.default = isDefault;
 
+    // Add 'custom' class if it's not a default filter
     if (!isDefault) {
         button.classList.add('custom');
+
+        // Create the remove (X) button
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = '✕';
         removeBtn.title = 'Remove filter';
-        removeBtn.addEventListener('click', (e) => {
+
+        // Event listener for removing the filter
+        removeBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            removeFilter(label);
+            await removeFilter(label, filterType);
         });
+
         button.appendChild(removeBtn);
     }
 
-    // Set initial state
-    if (selectedFilters.includes(label)) {
-        button.classList.add('active');
-    }
-
-    // Event listener for toggling
-    button.addEventListener('click', () => {
-        const index = selectedFilters.indexOf(label);
-        if (index > -1) {
-            selectedFilters.splice(index, 1);
-            button.classList.remove('active');
-        } else {
-            selectedFilters.push(label);
+    // Set initial state based on selected filters
+    if (filterType === 'exclude-filters') {
+        if (excludeFilters.includes(label)) {
             button.classList.add('active');
         }
-        saveSelectedFilters();
+    } else {
+        if (selectedFilters.includes(label)) {
+            button.classList.add('active');
+        }
+    }
+
+    // Event listener for toggling active state
+    button.addEventListener('click', () => {
+        if (filterType === 'exclude-filters') {
+            const index = excludeFilters.indexOf(label);
+            if (index > -1) {
+                excludeFilters.splice(index, 1);
+                button.classList.remove('active');
+            } else {
+                excludeFilters.push(label);
+                button.classList.add('active');
+            }
+            saveSelectedExcludeFilters();
+        } else {
+            const index = selectedFilters.indexOf(label);
+            if (index > -1) {
+                selectedFilters.splice(index, 1);
+                button.classList.remove('active');
+            } else {
+                selectedFilters.push(label);
+                button.classList.add('active');
+            }
+            saveSelectedFilters();
+        }
         loadContent();
-        // Call any function that depends on selectedFilters
-        // e.g., loadContent();
     });
 
     container.appendChild(button);
 }
 
-// Function to remove a custom filter
-async function removeFilter(label) {
-    // Remove from selectedFilters if present
-    const index = selectedFilters.indexOf(label);
-    if (index > -1) {
-        selectedFilters.splice(index, 1);
-        saveSelectedFilters();
-    }
-
-    // Remove from customFilters in storage
-    const customFilters = await getCustomFilters();
-    const filterIndex = customFilters.indexOf(label);
-    if (filterIndex > -1) {
-        customFilters.splice(filterIndex, 1);
-        saveCustomFilters(customFilters);
-    }
-
-    // Remove the button from the DOM
-    const button = document.querySelector(`.category-toggle-button[data-label="${label}"]`);
-    if (button) {
-        button.remove();
-    }
-}
-
-// Function to update filter button states based on selectedFilters
-function updateFilterStates() {
-    const buttons = document.querySelectorAll('.category-toggle-button');
-    buttons.forEach(button => {
-        const label = button.dataset.label;
-        if (selectedFilters.includes(label)) {
-            button.classList.add('active');
-        } else {
-            button.classList.remove('active');
+/* Function to remove a custom filter */
+async function removeFilter(label, filterType) {
+    if (filterType === 'exclude-filters') {
+        // Remove from excludeFilters if present
+        const index = excludeFilters.indexOf(label);
+        if (index > -1) {
+            excludeFilters.splice(index, 1);
+            saveSelectedExcludeFilters();
         }
-    });
+
+        // Remove from customExcludeFilters in storage
+        const customExcludeFilters = await getCustomExcludeFilters();
+        const filterIndex = customExcludeFilters.indexOf(label);
+        if (filterIndex > -1) {
+            customExcludeFilters.splice(filterIndex, 1);
+            saveCustomExcludeFilters(customExcludeFilters);
+        }
+
+        // Remove the button from the DOM
+        const button = document.querySelector(`.category-toggle-button[data-label="${label}"]`);
+        if (button) {
+            button.remove();
+        }
+    } else {
+        // Existing category filters removal
+        // Remove from selectedFilters if present
+        const index = selectedFilters.indexOf(label);
+        if (index > -1) {
+            selectedFilters.splice(index, 1);
+            saveSelectedFilters();
+        }
+
+        // Remove from customFilters in storage
+        const customFilters = await getCustomFilters();
+        const filterIndex = customFilters.indexOf(label);
+        if (filterIndex > -1) {
+            customFilters.splice(filterIndex, 1);
+            saveCustomFilters(customFilters);
+        }
+
+        // Remove the button from the DOM
+        const button = document.querySelector(`.category-toggle-button[data-label="${label}"]`);
+        if (button) {
+            button.remove();
+        }
+    }
 }
 
-// Event listener for adding new filter
+/* Function to update filter button states based on selectedFilters */
+function updateFilterStates(filterType = 'category-filters') {
+    let buttons;
+    if (filterType === 'exclude-filters') {
+        buttons = document.querySelectorAll('#exclude-filters .category-toggle-button');
+        buttons.forEach(button => {
+            const label = button.dataset.label;
+            if (excludeFilters.includes(label)) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    } else {
+        buttons = document.querySelectorAll('#category-filters .category-toggle-button');
+        buttons.forEach(button => {
+            const label = button.dataset.label;
+            if (selectedFilters.includes(label)) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+}
+
+/* Event listener for adding new category filter */
 document.getElementById('add-filter-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('new-filter-input');
     const newFilter = input.value.trim();
     if (newFilter && !selectedFilters.includes(newFilter)) {
         // Create toggle button
-        createToggleButton(newFilter, false);
+        createToggleButton(newFilter, false, 'category-filters');
 
         // Save to custom filters
         const customFilters = await getCustomFilters();
         customFilters.push(newFilter);
         saveCustomFilters(customFilters);
+
+        input.value = '';
+    }
+});
+
+/* Event listener for adding new exclude filter */
+document.getElementById('add-exclude-filter-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('new-exclude-filter-input');
+    const newExcludeFilter = input.value.trim();
+    if (newExcludeFilter && !excludeFilters.includes(newExcludeFilter)) {
+        // Create toggle button
+        createToggleButton(newExcludeFilter, false, 'exclude-filters');
+
+        // Save to custom exclude filters
+        const customExcludeFilters = await getCustomExcludeFilters();
+        customExcludeFilters.push(newExcludeFilter);
+        saveCustomExcludeFilters(customExcludeFilters);
 
         input.value = '';
     }

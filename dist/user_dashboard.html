@@ -23,12 +23,24 @@
 
   <!-- Category Filters Container -->
   <div class="category-filters-container">
-    <h3>Tag Filters</h3>
+    <h3>Filter Tags</h3>
     <div id="category-filters">
         <!-- Toggle buttons will be added here dynamically -->
     </div>
     <form id="add-filter-form">
         <input type="text" id="new-filter-input" placeholder="Add new category" required>
+        <button type="submit">Add</button>
+    </form>
+  </div>
+
+  <!-- Exclude Filters Container -->
+  <div class="category-filters-container">
+    <h3>Exclude Tags</h3>
+    <div id="exclude-filters">
+        <!-- Toggle buttons for exclude tags will be added here dynamically -->
+    </div>
+    <form id="add-exclude-filter-form">
+        <input type="text" id="new-exclude-filter-input" placeholder="Add new exclude tag" required>
         <button type="submit">Add</button>
     </form>
   </div>

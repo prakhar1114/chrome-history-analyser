@@ -452,39 +452,38 @@ button:focus {
 .category-filters-container {
     margin: 20px;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
 }
 
 .category-filters-container h3 {
+    width: 100%;
     margin-bottom: 10px;
-    flex-basis: 100%;
 }
 
-#category-filters {
+#category-filters,
+#exclude-filters {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    /* flex-grow: 1; */
 }
 
-#add-filter-form {
+#add-filter-form,
+#add-exclude-filter-form {
     display: flex;
     align-items: center;
     gap: 5px;
-    flex-shrink: 0;
-    margin-left: 10px; /* Adjust as needed */
+    width: 100%;
 }
 
-#add-filter-form input {
-    padding: 8px;
-    width: 200px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+#add-filter-form input,
+#add-exclude-filter-form input {
+    flex: 1;
 }
 
-#add-filter-form button {
+#add-filter-form button,
+#add-exclude-filter-form button {
     padding: 8px 12px;
     border: none;
     border-radius: 4px;
@@ -494,7 +493,8 @@ button:focus {
     transition: background-color 0.3s;
 }
 
-#add-filter-form button:hover {
+#add-filter-form button:hover,
+#add-exclude-filter-form button:hover {
     background-color: #218838;
 }
 
@@ -532,17 +532,46 @@ button:focus {
     display: none; /* Hidden by default */
 }
 
-.category-toggle-button.custom:hover .remove-btn {
+.category-toggle-button.custom:hover .remove-btn,
+.category-toggle-button.custom:focus .remove-btn {
     display: inline;
 }
 
-@media (max-width: 600px) {
-    #add-filter-form {
-        width: 100%;
-        margin-left: 0; /* Remove left margin on small screens */
+.category-toggle-button .remove-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 5px;
+    font-size: 1em;
+    line-height: 1;
+    display: none; /* Hidden by default */
+}
+
+.category-toggle-button .remove-btn {
+    margin-left: 5px;
+}
+
+.category-toggle-button .remove-btn:hover {
+    color: #ff0000;
+}
+
+@media (min-width: 600px) {
+    .category-filters-container {
+        flex-direction: row;
+        align-items: center;
     }
 
-    #add-filter-form input {
-        width: 100%;
+    .category-filters-container h3 {
+        margin-right: 20px;
+        width: auto;
+    }
+
+    #add-filter-form,
+    #add-exclude-filter-form {
+        width: auto;
     }
 }
+
+/* Optional: Style adjustments for "Exclude Tags" if needed */

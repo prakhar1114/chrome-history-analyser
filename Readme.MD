@@ -29,6 +29,9 @@
 - [ ] Write, Rewrite API for summary :yellow_circle:
 - [ ] Embedding search for history items :green_circle:
 - [ ] Generate multiple embeddings for each history item and use them for search
+- [ ] Token search should be from tags space, text/questions search should be from summary space and maybe titles using embeddings
+- [ ] Add exclude filters
+- [ ] Beautify summary: add a list of all domains, which expand to show its contents on click
 
 ## General Notes
 - npm run dev: to run dev server to automatically update dist always
