@@ -1,6 +1,6 @@
 import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
-import { enableResizing, createOrGetWidget } from './widgets.js';
+import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
 import { extractDomain, markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
 let startDate, endDate, topNHostnamesWithTitles;
@@ -154,6 +154,9 @@ async function addOrUpdateRecentHistoryWidget() {
 
   createRecentHistoryElement().then((widget) => {
       newWidget.appendChild(widget);
+      // adjust size of newWidget
+      console.log('adjusting size of newWidget');
+      adjustWidgetSize(newWidget);
   });
 }
 

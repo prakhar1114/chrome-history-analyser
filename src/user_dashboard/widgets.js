@@ -112,5 +112,13 @@ function enableResizing() {
     return newWidget;
   }
 
-export { enableResizing, saveWidgetSize, loadWidgetSize, createOrGetWidget };
+  function adjustWidgetSize(widget) {
+    const content = widget.querySelector('.history-container');
+    const header = widget.querySelector('.widget-header');
+    const headerHeight = header.offsetHeight;
+    const contentHeight = content.offsetHeight;
+    widget.style.height = `${headerHeight + contentHeight + 50}px`;
+  }
+
+export { enableResizing, saveWidgetSize, loadWidgetSize, createOrGetWidget, adjustWidgetSize };
   
