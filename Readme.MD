@@ -30,8 +30,9 @@
 - [ ] Embedding search for history items :green_circle:
 - [ ] Generate multiple embeddings for each history item and use them for search
 - [ ] Token search should be from tags space, text/questions search should be from summary space and maybe titles using embeddings
-- [ ] Add exclude filters
+- [X] Add exclude filters
 - [ ] Beautify summary: add a list of all domains, which expand to show its contents on click
+- [ ] My snippet library: will appear in drop down on selecting and right clicking in web browser
 
 ## General Notes
 - npm run dev: to run dev server to automatically update dist always
