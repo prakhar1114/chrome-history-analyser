@@ -162,7 +162,7 @@ export async function getHistoryInTimeRange(startDate, endDate) {
   const objectStore = transaction.objectStore('history');
   const index = objectStore.index('lastVisitTime');
   const range = IDBKeyRange.bound(startDate, endDate);
-  const request = index.getAll(range);  
+  const request = index.getAll(range);
 
   const result = await promisifyRequest(request);
   return result;

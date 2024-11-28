@@ -3,7 +3,7 @@ import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
 import { markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
-let startDate, endDate, topNHostnamesWithTitles;
+let startDate, endDate;
 const defaultDateRange = '1w';
 const enableBasicSummary = false;
 
@@ -222,7 +222,7 @@ async function loadContent() {
 }
 
 async function createRecentHistoryElement() {
-  topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -294,7 +294,7 @@ async function createRecentHistoryElement() {
 }
 
 async function createBasicSummaryElement(newWidget) {
-  const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
   // Append all history items to a single string

@@ -3,7 +3,7 @@ import { getHistoryWithTopNStats } from './history.js';
 
 
 async function getFullSummary(startDate, endDate, selectedFilters, excludeFilters) {
-    const topNHostnamesWithTitles = await getHistoryWithTopNStats(startDate, endDate, 20, selectedFilters, excludeFilters);
+    const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 20, selectedFilters, excludeFilters);
     const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
     const historyItemTitles = historyItems.map(item => item.title).join(', ');

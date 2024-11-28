@@ -2,7 +2,7 @@ import Fuse from 'fuse.js';
 import { getAllHistoryItems } from '../utils/db.js';
 
 
-export async function getSearchResults(raw_query) {
+async function getSearchResults(raw_query) {
     const query = raw_query.trim().toLowerCase();
     const historyItems = await getAllHistoryItems();
     const fuse = new Fuse(historyItems, {
@@ -18,7 +18,7 @@ export async function getSearchResults(raw_query) {
     return results;
 }
 
-export function getFilteredHistoryItems(historyItems, selectedFilters, excludeFilters) {
+function getFilteredHistoryItems(historyItems, selectedFilters, excludeFilters) {
     // Start with all history items
     let filteredItems = historyItems;
 
@@ -62,3 +62,5 @@ export function getFilteredHistoryItems(historyItems, selectedFilters, excludeFi
 
     return filteredItems;
 }
+
+export { getFilteredHistoryItems, getSearchResults };

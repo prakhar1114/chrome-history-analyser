@@ -63,7 +63,7 @@ example titles:
 {title: 'super resolution model online free - Google Search', url: 'https://www.google.com/search?q=super+resolution+m…FmAMAiAYBkAYIkgcEMi4xM6AHklk&sclient=gws-wiz-serp'}
  */
 
-export async function getHistoryWithTopNStats(startDate, endDate, N, selectedFilters, excludeFilters) {
+async function getHistoryWithTopNStats(startDate, endDate, N, selectedFilters, excludeFilters) {
     const historyItems = await getHistoryInTimeRange(startDate.getTime(), endDate.getTime());
     const filteredHistoryItems = getFilteredHistoryItems(historyItems, selectedFilters, excludeFilters);
     const parsedHistoryItems = filteredHistoryItems.map(item => parse_url_part(item.url, item.title));
@@ -73,7 +73,7 @@ export async function getHistoryWithTopNStats(startDate, endDate, N, selectedFil
     const topNHostnames = sortedHostnames.slice(0, N);
     const topNHostnamesWithTitles = topNHostnames.map(item => ({ hostname: item[0], titles: hostnameTitleMap.get(item[0]), count: item[1] }));
 
-    return topNHostnamesWithTitles;
+    return { topNHostnamesWithTitles, filteredHistoryItems };
 }
 
 
@@ -202,4 +202,4 @@ function createHostNameTitleMap(parsedHistoryItems) {
 
 
 
-// export { getHistory };
+export { getHistoryWithTopNStats };
