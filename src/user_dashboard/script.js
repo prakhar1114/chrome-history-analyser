@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadContent();
     enableResizing();
   
-    document.getElementById('refresh-button').addEventListener('click', () => {
+    document.getElementById('refresh-button').addEventListener('click', async () => {
+      await handleWordDeselectReset();
       loadContent();
     });
 
@@ -612,8 +613,9 @@ function updateFilterStates(filterType = 'category-filters') {
  * @param {string} word - The word to exclude.
  */
 function handleWordSelect(word) {
-
-    state.tempSelectedFilters = state.selectedFilters;
+    if (state.tempSelectedFilters === null) {
+        state.tempSelectedFilters = state.selectedFilters;
+    }
     state.selectedFilters = [word];
     addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
 
@@ -625,7 +627,17 @@ function handleWordSelect(word) {
  * @param {string} word - The word to remove from exclusion.
  */
 async function handleWordDeselect(word) {
-    state.selectedFilters = state.tempSelectedFilters;
-    state.tempSelectedFilters = null;
-    addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
+    if (state.tempSelectedFilters) {
+        state.selectedFilters = state.tempSelectedFilters;
+        state.tempSelectedFilters = null;
+        addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
+    }
+}
+
+async function handleWordDeselectReset() {
+    if (state.tempSelectedFilters) {
+        state.selectedFilters = state.tempSelectedFilters;
+        state.tempSelectedFilters = null;
+        addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
+    }
 }
