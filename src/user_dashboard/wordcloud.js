@@ -48,7 +48,7 @@ function createWordCloudElement(widget, wordDistribution, onSelectWord, onDesele
         .words(wordDistribution.map(d => ({ text: d.text, size: d.size })))
         .padding(5)
         .rotate(() => 0) // No rotation; modify as needed
-        .font('Impact')
+        .font('Arial')
         .fontSize(d => scaleFontSize(d.size))
         .on('end', draw);
 
@@ -82,7 +82,7 @@ function createWordCloudElement(widget, wordDistribution, onSelectWord, onDesele
             .each(function(d) {
                 d.originalColor = d3.schemeCategory10[Math.floor(Math.random() * 10)];
             })
-            .style('font-family', 'Impact')
+            .style('font-family', 'Arial')
             .style('fill', d => d.originalColor)
             .style('font-size', d => `${d.size}px`)
             .attr('text-anchor', 'middle')

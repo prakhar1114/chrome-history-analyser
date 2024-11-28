@@ -660,9 +660,12 @@ button:focus {
     }
 }
 
-/* Add this new class */
 .word-selected {
-    fill: red; /* Selected word color */
+    fill: #FF4500; /* Highlight color (e.g., OrangeRed) */
     font-weight: bold; /* Bold font for emphasis */
-    text-decoration: underline; /* Optional underline */
+    stroke: #000000; /* Black stroke for outline */
+    stroke-width: 1px; /* Thickness of the stroke */
+    cursor: pointer; /* Change cursor to pointer on hover */
+    /* Optional: Add transition for smooth effect */
+    transition: fill 0.3s, stroke 0.3s;
 }
