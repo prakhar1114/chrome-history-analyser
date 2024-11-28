@@ -3,6 +3,7 @@ import cloud from 'd3-cloud';
 
 import { createOrGetWidget } from './widgets.js';
 import { getHistoryWithTopNStats } from './history.js';
+import { adjustWidgetSize } from './widgets.js';
 
 async function addOrUpdateWordCloudWidget(wordDistribution) {
     const newWidget = createOrGetWidget('wordcloud-main', 'Word Cloud');
@@ -12,10 +13,15 @@ async function addOrUpdateWordCloudWidget(wordDistribution) {
     newWidget.removeChild(newWidget.lastChild);
     }
 
-  await createWordCloudElement(newWidget, wordDistribution);
+  createWordCloudElement(newWidget, wordDistribution);
 }
 
-async function createWordCloudElement(widget, wordDistribution) {
+/**
+ * Creates and appends a word cloud to the specified widget.
+ * @param {HTMLElement} widget - The DOM element to which the word cloud is appended.
+ * @param {Array} wordDistribution - An array of word objects with 'text' and 'size' properties.
+ */
+function createWordCloudElement(widget, wordDistribution) {
     // Remove any existing word cloud content
     const wordCloudContainer = document.createElement('div');
     wordCloudContainer.className = 'wordcloud-contents';
@@ -25,13 +31,16 @@ async function createWordCloudElement(widget, wordDistribution) {
     const width = 500;
     const height = 400;
 
-    // Create an SVG element for the word cloud
+    // Create an SVG element for the word cloud: canvas where it renders
     const svg = d3.select(wordCloudContainer)
         .append('svg')
         .attr('width', width)
         .attr('height', height);
 
-    // Define the layout for the word cloud
+    // Initialize currently selected word (null means no selection)
+    let selectedWord = null;
+
+    // Define the layout for the word cloud: computer position of each word based on size and frequency
     const layout = cloud()
         .size([width, height])
         .words(wordDistribution.map(d => ({ text: d.text, size: d.size })))
@@ -41,9 +50,14 @@ async function createWordCloudElement(widget, wordDistribution) {
         .fontSize(d => scaleFontSize(d.size))
         .on('end', draw);
 
+    // start positioning words
     layout.start();
 
-    // Function to scale font sizes based on word frequency
+    /**
+     * Scales the font size based on word frequency.
+     * @param {number} size - The frequency count of the word.
+     * @returns {number} - The scaled font size.
+     */
     function scaleFontSize(size) {
         const minSize = 10;
         const maxSize = 100;
@@ -53,20 +67,76 @@ async function createWordCloudElement(widget, wordDistribution) {
         return ((size - min) / (max - min)) * (maxSize - minSize) + minSize;
     }
 
-    // Function to draw the word cloud
+    /**
+     * Draws the word cloud on the SVG canvas.
+     * @param {Array} words - The array of word objects with positioning data.
+     */
     function draw(words) {
         svg.append('g')
             .attr('transform', `translate(${width / 2},${height / 2})`)
             .selectAll('text')
             .data(words)
             .enter().append('text')
+            .each(function(d) {
+                d.originalColor = d3.schemeCategory10[Math.floor(Math.random() * 10)];
+            })
             .style('font-family', 'Impact')
-            .style('fill', () => d3.schemeCategory10[Math.floor(Math.random() * 10)])
+            .style('fill', d => d.originalColor)
             .style('font-size', d => `${d.size}px`)
             .attr('text-anchor', 'middle')
             .attr('transform', d => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
-            .text(d => d.text);
+            .text(d => d.text)
+            .style('cursor', 'pointer')
+            // Click event to handle selection
+            .on('click', function(event, d) {
+                console.log('Clicked element:', this); // Debugging statement
+                console.log('Selected word before:', selectedWord); // Debugging statement
+
+                // If the clicked word is already selected, deselect it
+                if (selectedWord === this) {
+                    d3.select(this).classed('word-selected', false);
+                    selectedWord = null;
+                    console.log(`Word deselected: ${d.text}`);
+                } else {
+                    // Deselect the previously selected word, if any
+                    if (selectedWord) {
+                        d3.select(selectedWord).classed('word-selected', false);
+                        const prevData = d3.select(selectedWord).data()[0];
+                        console.log(`Word deselected: ${prevData.text}`);
+                    }
+                    // Select the new word
+                    d3.select(this).classed('word-selected', true);
+                    selectedWord = this;
+                    console.log(`Word selected: ${d.text}`);
+                }
+
+                // Placeholder for additional callback functions
+                // addYourCallbackFunction(d.text);
+            })
+            // Mouseover event to highlight word
+            .on('mouseover', function(event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .style('fill', 'orange');
+            })
+            // Mouseout event to remove highlight
+            .on('mouseout', function(event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .style('fill', d.originalColor);
+
+                // If the word is selected, maintain the 'word-selected' style
+                if (selectedWord === this) {
+                    d3.select(this)
+                        .style('fill', 'red'); // Ensure selected words retain their selected color
+                }
+            });
     }
+
+    // Adjust widget size as needed
+    adjustWidgetSize(widget, ['.wordcloud-contents'], 100);
 }
 
 async function getWordDistribution(startDate, endDate, selectedFilters, excludeFilters) {

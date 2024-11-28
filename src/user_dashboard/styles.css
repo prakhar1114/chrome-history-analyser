@@ -659,3 +659,10 @@ button:focus {
         height: auto;
     }
 }
+
+/* Add this new class */
+.word-selected {
+    fill: red; /* Selected word color */
+    font-weight: bold; /* Bold font for emphasis */
+    text-decoration: underline; /* Optional underline */
+}
