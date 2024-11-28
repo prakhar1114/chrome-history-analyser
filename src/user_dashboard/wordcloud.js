@@ -4,7 +4,7 @@ import cloud from 'd3-cloud';
 import { createOrGetWidget } from './widgets.js';
 import { getHistoryWithTopNStats } from './history.js';
 
-async function addOrUpdateWordCloudWidget() {
+async function addOrUpdateWordCloudWidget(wordDistribution) {
     const newWidget = createOrGetWidget('wordcloud-main', 'Word Cloud');
 
   // delete children containing *recent-history-contents*
@@ -12,21 +12,21 @@ async function addOrUpdateWordCloudWidget() {
     newWidget.removeChild(newWidget.lastChild);
     }
 
-  await createWordCloudElement(newWidget);
+  await createWordCloudElement(newWidget, wordDistribution);
 }
 
-async function createWordCloudElement(widget) {
-    const wordDis = await getWordDistribution();
-
+async function createWordCloudElement(widget, wordDistribution) {
     // Remove any existing word cloud content
-    widget.innerHTML = '';
+    const wordCloudContainer = document.createElement('div');
+    wordCloudContainer.className = 'wordcloud-contents';
+    widget.appendChild(wordCloudContainer);
 
     // Define dimensions for the word cloud
     const width = 500;
     const height = 400;
 
     // Create an SVG element for the word cloud
-    const svg = d3.select(widget)
+    const svg = d3.select(wordCloudContainer)
         .append('svg')
         .attr('width', width)
         .attr('height', height);
@@ -34,7 +34,7 @@ async function createWordCloudElement(widget) {
     // Define the layout for the word cloud
     const layout = cloud()
         .size([width, height])
-        .words(wordDis.map(d => ({ text: d.text, size: d.size })))
+        .words(wordDistribution.map(d => ({ text: d.text, size: d.size })))
         .padding(5)
         .rotate(() => 0) // No rotation; modify as needed
         .font('Impact')
@@ -47,7 +47,7 @@ async function createWordCloudElement(widget) {
     function scaleFontSize(size) {
         const minSize = 10;
         const maxSize = 100;
-        const sizes = wordDis.map(d => d.size);
+        const sizes = wordDistribution.map(d => d.size);
         const min = Math.min(...sizes);
         const max = Math.max(...sizes);
         return ((size - min) / (max - min)) * (maxSize - minSize) + minSize;
@@ -111,4 +111,4 @@ async function getWordDistribution(startDate, endDate, selectedFilters, excludeF
 // max and min of freqeuncy
 // select one's randomly
 
-export { addOrUpdateWordCloudWidget };
+export { addOrUpdateWordCloudWidget, getWordDistribution };

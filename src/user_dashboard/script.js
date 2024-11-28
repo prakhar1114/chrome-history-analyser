@@ -2,18 +2,17 @@ import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
 import { markdownToHtml, cleanInput } from './utils.js';
+import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
-
-const enableBasicSummary = false;
 
 const state = {
     startDate: null,
-    endDate: null
+    endDate: null,
+    selectedFilters: [],
+    excludeFilters: [],
+    enableBasicSummary: false,
+    enableWordCloud: true
 }
-
-// Global variables to store selected filters
-let selectedFilters = [];
-let excludeFilters = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     const defaultDateRange = '1w';
@@ -24,10 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize category and exclude filters
     await initializeFilters();
-    addOrUpdateRecentHistoryWidget(startDate, endDate);
-    if (enableBasicSummary) {
-      addOrUpdateBasicSummaryWidget(startDate, endDate);
-    }
+    await loadContent();
     enableResizing();
   
     document.getElementById('refresh-button').addEventListener('click', () => {
@@ -57,7 +53,7 @@ document.getElementById('add-filter-form').addEventListener('submit', async (e) 
     e.preventDefault();
     const input = document.getElementById('new-filter-input');
     const newFilter = input.value.trim();
-    if (newFilter && !selectedFilters.includes(newFilter)) {
+    if (newFilter && !state.selectedFilters.includes(newFilter)) {
         // Create toggle button
         createToggleButton(newFilter, false, 'category-filters');
 
@@ -75,7 +71,7 @@ document.getElementById('add-exclude-filter-form').addEventListener('submit', as
     e.preventDefault();
     const input = document.getElementById('new-exclude-filter-input');
     const newExcludeFilter = input.value.trim();
-    if (newExcludeFilter && !excludeFilters.includes(newExcludeFilter)) {
+    if (newExcludeFilter && !state.excludeFilters.includes(newExcludeFilter)) {
         // Create toggle button
         createToggleButton(newExcludeFilter, false, 'exclude-filters');
 
@@ -224,16 +220,20 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate) {
 
 /* Load Content Based on Date Range */
 async function loadContent() {
-  console.log('Selected Filters:', selectedFilters);
-  console.log('Exclude Filters:', excludeFilters);
-  await addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
-  if (enableBasicSummary) {
-    await addOrUpdateBasicSummaryWidget(state.startDate, state.endDate);
+  console.log('Selected Filters:', state.selectedFilters);
+  console.log('Exclude Filters:', state.excludeFilters);
+  addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
+  if (state.enableBasicSummary) {
+    addOrUpdateBasicSummaryWidget(state.startDate, state.endDate);
+  }
+  if (state.enableWordCloud) {
+    const wordDistribution = await getWordDistribution(state.startDate, state.endDate, state.selectedFilters, state.excludeFilters);
+    addOrUpdateWordCloudWidget(wordDistribution);
   }
 }
 
 async function createRecentHistoryElement(startDate, endDate) {
-  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
   const container = document.createElement('div');
   container.className = 'history-container';
   container.id = 'recent-history-contents';
@@ -305,7 +305,7 @@ async function createRecentHistoryElement(startDate, endDate) {
 }
 
 async function createBasicSummaryElement(newWidget, startDate, endDate) {
-  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
   // Append all history items to a single string
@@ -376,7 +376,7 @@ async function initializeCategoryFilters() {
     });
 
     // Load selected filters from storage
-    selectedFilters = await getSelectedFilters();
+    state.selectedFilters = await getSelectedFilters();
     updateFilterStates('category-filters');
 }
 
@@ -389,7 +389,7 @@ async function initializeExcludeFilters() {
     });
 
     // Load selected exclude filters from storage
-    excludeFilters = await getSelectedExcludeFilters();
+    state.excludeFilters = await getSelectedExcludeFilters();
     updateFilterStates('exclude-filters');
 }
 
@@ -415,8 +415,8 @@ function getSelectedFilters() {
 
 /* Function to save selected filters to Chrome storage */
 function saveSelectedFilters() {
-    chrome.storage.local.set({ selectedFilters }, () => {
-        console.log('Selected filters saved:', selectedFilters);
+    chrome.storage.local.set({ selectedFilters: state.selectedFilters }, () => {
+        console.log('Selected filters saved:', state.selectedFilters);
     });
 }
 
@@ -449,8 +449,8 @@ function getSelectedExcludeFilters() {
 
 /* Function to save selected exclude filters to Chrome storage */
 function saveSelectedExcludeFilters() {
-    chrome.storage.local.set({ selectedExcludeFilters: excludeFilters }, () => {
-        console.log('Selected exclude filters saved:', excludeFilters);
+    chrome.storage.local.set({ selectedExcludeFilters: state.excludeFilters }, () => {
+        console.log('Selected exclude filters saved:', state.excludeFilters);
     });
 }
 
@@ -493,11 +493,11 @@ function createToggleButton(label, isDefault = false, filterType = 'category-fil
 
     // Set initial state based on selected filters
     if (filterType === 'exclude-filters') {
-        if (excludeFilters.includes(label)) {
+        if (state.excludeFilters.includes(label)) {
             button.classList.add('active');
         }
     } else {
-        if (selectedFilters.includes(label)) {
+        if (state.selectedFilters.includes(label)) {
             button.classList.add('active');
         }
     }
@@ -505,22 +505,22 @@ function createToggleButton(label, isDefault = false, filterType = 'category-fil
     // Event listener for toggling active state
     button.addEventListener('click', () => {
         if (filterType === 'exclude-filters') {
-            const index = excludeFilters.indexOf(label);
+            const index = state.excludeFilters.indexOf(label);
             if (index > -1) {
-                excludeFilters.splice(index, 1);
+                state.excludeFilters.splice(index, 1);
                 button.classList.remove('active');
             } else {
-                excludeFilters.push(label);
+                state.excludeFilters.push(label);
                 button.classList.add('active');
             }
             saveSelectedExcludeFilters();
         } else {
-            const index = selectedFilters.indexOf(label);
+            const index = state.selectedFilters.indexOf(label);
             if (index > -1) {
-                selectedFilters.splice(index, 1);
+                state.selectedFilters.splice(index, 1);
                 button.classList.remove('active');
             } else {
-                selectedFilters.push(label);
+                state.selectedFilters.push(label);
                 button.classList.add('active');
             }
             saveSelectedFilters();
@@ -535,9 +535,9 @@ function createToggleButton(label, isDefault = false, filterType = 'category-fil
 async function removeFilter(label, filterType) {
     if (filterType === 'exclude-filters') {
         // Remove from excludeFilters if present
-        const index = excludeFilters.indexOf(label);
+        const index = state.excludeFilters.indexOf(label);
         if (index > -1) {
-            excludeFilters.splice(index, 1);
+            state.excludeFilters.splice(index, 1);
             saveSelectedExcludeFilters();
         }
 
@@ -557,9 +557,9 @@ async function removeFilter(label, filterType) {
     } else {
         // Existing category filters removal
         // Remove from selectedFilters if present
-        const index = selectedFilters.indexOf(label);
+        const index = state.selectedFilters.indexOf(label);
         if (index > -1) {
-            selectedFilters.splice(index, 1);
+            state.selectedFilters.splice(index, 1);
             saveSelectedFilters();
         }
 
@@ -586,7 +586,7 @@ function updateFilterStates(filterType = 'category-filters') {
         buttons = document.querySelectorAll('#exclude-filters .category-toggle-button');
         buttons.forEach(button => {
             const label = button.dataset.label;
-            if (excludeFilters.includes(label)) {
+            if (state.excludeFilters.includes(label)) {
                 button.classList.add('active');
             } else {
                 button.classList.remove('active');
@@ -596,7 +596,7 @@ function updateFilterStates(filterType = 'category-filters') {
         buttons = document.querySelectorAll('#category-filters .category-toggle-button');
         buttons.forEach(button => {
             const label = button.dataset.label;
-            if (selectedFilters.includes(label)) {
+            if (state.selectedFilters.includes(label)) {
                 button.classList.add('active');
             } else {
                 button.classList.remove('active');
