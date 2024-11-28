@@ -580,3 +580,82 @@ button:focus {
 }
 
 /* Optional: Style adjustments for "Exclude Tags" if needed */
+
+/* Resizable widget container */
+.resizable {
+    position: relative;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    overflow: auto;
+    transition: height 0.2s ease, width 0.2s ease;
+    min-width: 200px;
+    min-height: 100px;
+}
+
+/* Resize handle */
+.resize-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: 0;
+    bottom: 0;
+    cursor: se-resize;
+    z-index: 10;
+}
+
+.resize-handle::after {
+    content: "\f424"; /* fa-expand-arrows-alt */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666;
+}
+
+/* Style when resizing */
+.resizing {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.resizing .resize-handle {
+    transform: rotate(45deg);
+}
+
+/* Widget header */
+.widget-header {
+    padding: 10px;
+    background-color: #f1f1f1;
+    /* border-bottom: 1px solid #ccc; */
+    cursor: default;
+}
+
+/* Widget content */
+.widget .content {
+    padding: 10px;
+    overflow: auto;
+}
+
+/* Basic summary contents */
+.basic-summary-contents {
+    /* padding: 0px 0; */
+    line-height: 1.5;
+    font-size: 14px;
+    color: #333;
+    /* margin: 0px 0; */
+}
+
+/* Manage content overflow */
+.resizable {
+    overflow: auto;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+    .resizable {
+        width: 100%;
+        height: auto;
+    }
+}

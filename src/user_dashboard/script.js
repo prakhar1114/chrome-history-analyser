@@ -156,7 +156,7 @@ async function addOrUpdateRecentHistoryWidget() {
       newWidget.appendChild(widget);
       // adjust size of newWidget
       console.log('adjusting size of newWidget');
-      adjustWidgetSize(newWidget);
+      adjustWidgetSize(newWidget, ['.widget-header', '.history-container'], 50);
   });
 }
 
@@ -164,7 +164,7 @@ async function addOrUpdateBasicSummaryWidget() {
   const newWidget = createOrGetWidget('basic-summary', 'Summary');
 
   // delete children containing *contents*
-  while (newWidget.lastChild && newWidget.lastChild.id && newWidget.lastChild.id.includes('contents')) {
+  while (newWidget.lastChild && newWidget.lastChild.className && newWidget.lastChild.className.includes('contents')) {
       newWidget.removeChild(newWidget.lastChild);
   }
 
@@ -269,10 +269,12 @@ async function createBasicSummaryElement(newWidget) {
     let result = await summarize(cleanInput(chunk));
 
     let textElement = document.createElement('p');
-    textElement.id = 'basic-summary-contents';
+    // Use a class instead of an ID to allow multiple elements
+    textElement.classList.add('basic-summary-contents');
 
     textElement.innerHTML = markdownToHtml(result);
     newWidget.appendChild(textElement);
+    adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
   }
 }
 

@@ -112,13 +112,21 @@ function enableResizing() {
     return newWidget;
   }
 
-  function adjustWidgetSize(widget) {
-    const content = widget.querySelector('.history-container');
-    const header = widget.querySelector('.widget-header');
-    const headerHeight = header.offsetHeight;
-    const contentHeight = content.offsetHeight;
-    widget.style.height = `${headerHeight + contentHeight + 50}px`;
+  function adjustWidgetSize(widget, selectors, offset) {
+    let height = 0;
+    
+    selectors.forEach(selector => {
+        // Use querySelectorAll to handle multiple elements for each selector
+        const elements = widget.querySelectorAll(selector);
+        
+        elements.forEach(element => {
+            height += element.offsetHeight;
+        });
+    });
+    // console.log("New height: ", height);
+    widget.style.height = `${height + offset}px`;
   }
+
 
 export { enableResizing, saveWidgetSize, loadWidgetSize, createOrGetWidget, adjustWidgetSize };
   
