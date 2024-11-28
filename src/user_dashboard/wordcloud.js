@@ -5,7 +5,7 @@ import { createOrGetWidget } from './widgets.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { adjustWidgetSize } from './widgets.js';
 
-async function addOrUpdateWordCloudWidget(wordDistribution) {
+async function addOrUpdateWordCloudWidget(wordDistribution, onSelectWord, onDeselectWord) {
     const newWidget = createOrGetWidget('wordcloud-main', 'Word Cloud');
 
   // delete children containing *recent-history-contents*
@@ -13,15 +13,17 @@ async function addOrUpdateWordCloudWidget(wordDistribution) {
     newWidget.removeChild(newWidget.lastChild);
     }
 
-  createWordCloudElement(newWidget, wordDistribution);
+  createWordCloudElement(newWidget, wordDistribution, onSelectWord, onDeselectWord);
 }
 
 /**
  * Creates and appends a word cloud to the specified widget.
  * @param {HTMLElement} widget - The DOM element to which the word cloud is appended.
  * @param {Array} wordDistribution - An array of word objects with 'text' and 'size' properties.
+ * @param {Function} onSelectWord - Callback invoked when a word is selected.
+ * @param {Function} onDeselectWord - Callback invoked when a word is deselected.
  */
-function createWordCloudElement(widget, wordDistribution) {
+function createWordCloudElement(widget, wordDistribution, onSelectWord, onDeselectWord) {
     // Remove any existing word cloud content
     const wordCloudContainer = document.createElement('div');
     wordCloudContainer.className = 'wordcloud-contents';
@@ -89,25 +91,28 @@ function createWordCloudElement(widget, wordDistribution) {
             .style('cursor', 'pointer')
             // Click event to handle selection
             .on('click', function(event, d) {
-                console.log('Clicked element:', this); // Debugging statement
-                console.log('Selected word before:', selectedWord); // Debugging statement
+                // console.log('Clicked element:', this); // Debugging statement
+                // console.log('Selected word before:', selectedWord); // Debugging statement
 
                 // If the clicked word is already selected, deselect it
                 if (selectedWord === this) {
                     d3.select(this).classed('word-selected', false);
                     selectedWord = null;
                     console.log(`Word deselected: ${d.text}`);
+                    onDeselectWord(d.text); // Invoke deselect callback
                 } else {
                     // Deselect the previously selected word, if any
                     if (selectedWord) {
                         d3.select(selectedWord).classed('word-selected', false);
-                        const prevData = d3.select(selectedWord).data()[0];
-                        console.log(`Word deselected: ${prevData.text}`);
+                        // const prevData = d3.select(selectedWord).data()[0];
+                        // console.log(`Word deselected: ${prevData.text}`);
+                        // onDeselectWord(prevData.text); // Invoke deselect callback for previous word
                     }
                     // Select the new word
                     d3.select(this).classed('word-selected', true);
                     selectedWord = this;
                     console.log(`Word selected: ${d.text}`);
+                    onSelectWord(d.text); // Invoke select callback
                 }
 
                 // Placeholder for additional callback functions

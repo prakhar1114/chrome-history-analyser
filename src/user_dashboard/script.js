@@ -9,6 +9,7 @@ const state = {
     startDate: null,
     endDate: null,
     selectedFilters: [],
+    tempSelectedFilters: null,
     excludeFilters: [],
     enableBasicSummary: false,
     enableWordCloud: true
@@ -228,7 +229,7 @@ async function loadContent() {
   }
   if (state.enableWordCloud) {
     const wordDistribution = await getWordDistribution(state.startDate, state.endDate, state.selectedFilters, state.excludeFilters);
-    addOrUpdateWordCloudWidget(wordDistribution);
+    addOrUpdateWordCloudWidget(wordDistribution, handleWordSelect, handleWordDeselect);
   }
 }
 
@@ -603,4 +604,28 @@ function updateFilterStates(filterType = 'category-filters') {
             }
         });
     }
+}
+
+/**
+ * Handles the selection of a word from the word cloud.
+ * Adds the word to excludeFilters and updates the state.
+ * @param {string} word - The word to exclude.
+ */
+function handleWordSelect(word) {
+
+    state.tempSelectedFilters = state.selectedFilters;
+    state.selectedFilters = [word];
+    addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
+
+}
+
+/**
+ * Handles the deselection of a word from the word cloud.
+ * Removes the word from excludeFilters and updates the state.
+ * @param {string} word - The word to remove from exclusion.
+ */
+async function handleWordDeselect(word) {
+    state.selectedFilters = state.tempSelectedFilters;
+    state.tempSelectedFilters = null;
+    addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
 }
