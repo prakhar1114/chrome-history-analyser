@@ -1,22 +1,26 @@
 import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
-import { extractDomain, markdownToHtml, cleanInput } from './utils.js';
+import { markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
 let startDate, endDate, topNHostnamesWithTitles;
+const defaultDateRange = '1w';
+const enableBasicSummary = false;
 
 // Global variables to store selected filters
 let selectedFilters = [];
 let excludeFilters = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    addDateRangeButtons();
+    addDateRangeButtons(defaultDateRange);
     addRefreshButton();
-    setDateRange('24h');
+    setDateRange(defaultDateRange);
     // Initialize category and exclude filters
     await initializeFilters();
     addOrUpdateRecentHistoryWidget();
-    addOrUpdateBasicSummaryWidget();
+    if (enableBasicSummary) {
+      addOrUpdateBasicSummaryWidget();
+    }
     enableResizing();
   
     document.getElementById('refresh-button').addEventListener('click', () => {
@@ -88,7 +92,7 @@ function addRefreshButton() {
 }
 
 /* Initialize Date Range Inputs */
-function addDateRangeButtons() {
+function addDateRangeButtons(defaultDateRange) {
   
   const buttonData = [
       { label: 'Last 24 Hours', range: '24h' },
@@ -112,7 +116,7 @@ function addDateRangeButtons() {
       button.setAttribute('data-range', data.range);
 
       // Highlight the default selected button
-      if (data.range === '24h') {
+      if (data.range === defaultDateRange) {
           button.classList.add('selected');
       }
 
@@ -212,7 +216,9 @@ async function loadContent() {
   console.log('Selected Filters:', selectedFilters);
   console.log('Exclude Filters:', excludeFilters);
   await addOrUpdateRecentHistoryWidget();
-  await addOrUpdateBasicSummaryWidget();
+  if (enableBasicSummary) {
+    await addOrUpdateBasicSummaryWidget();
+  }
 }
 
 async function createRecentHistoryElement() {

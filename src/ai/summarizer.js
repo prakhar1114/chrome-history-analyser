@@ -1,3 +1,5 @@
+
+
 async function getSummarizer() {
     const options = {
         sharedContext: 'This is a list of titles visited by the user',
@@ -41,4 +43,25 @@ async function summarize(text) {
     }
 }
 
-export { summarize };
+async function summarizeWithContext(text, context) {
+    try {
+        const summarizer = await getSummarizer();
+        const result = await summarizer.summarize(text, { context });
+        await summarizer.destroy();
+        return result;
+    } catch (error) {
+        console.log('Error during summarization:', error);
+        return '';
+    }
+}
+
+async function summarizeLargeTextWithContext(text, context) {
+    const chunks = text.match(/.{1,2000}/g);
+    const summaries = [];
+    for (const chunk of chunks) {
+        const summary = await summarizeWithContext(cleanInput(chunk), context);
+        summaries.push(summary);
+    }
+}
+
+export { summarize, summarizeWithContext, summarizeLargeTextWithContext };
