@@ -41,6 +41,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+/* Event listener for adding new category filter */
+document.getElementById('add-filter-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('new-filter-input');
+    const newFilter = input.value.trim();
+    if (newFilter && !selectedFilters.includes(newFilter)) {
+        // Create toggle button
+        createToggleButton(newFilter, false, 'category-filters');
+
+        // Save to custom filters
+        const customFilters = await getCustomFilters();
+        customFilters.push(newFilter);
+        saveCustomFilters(customFilters);
+
+        input.value = '';
+    }
+});
+
+/* Event listener for adding new exclude filter */
+document.getElementById('add-exclude-filter-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('new-exclude-filter-input');
+    const newExcludeFilter = input.value.trim();
+    if (newExcludeFilter && !excludeFilters.includes(newExcludeFilter)) {
+        // Create toggle button
+        createToggleButton(newExcludeFilter, false, 'exclude-filters');
+
+        // Save to custom exclude filters
+        const customExcludeFilters = await getCustomExcludeFilters();
+        customExcludeFilters.push(newExcludeFilter);
+        saveCustomExcludeFilters(customExcludeFilters);
+
+        input.value = '';
+    }
+});
+
 
 function addRefreshButton() {
   const refreshButton = document.createElement('button');
@@ -551,39 +587,3 @@ function updateFilterStates(filterType = 'category-filters') {
         });
     }
 }
-
-/* Event listener for adding new category filter */
-document.getElementById('add-filter-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const input = document.getElementById('new-filter-input');
-    const newFilter = input.value.trim();
-    if (newFilter && !selectedFilters.includes(newFilter)) {
-        // Create toggle button
-        createToggleButton(newFilter, false, 'category-filters');
-
-        // Save to custom filters
-        const customFilters = await getCustomFilters();
-        customFilters.push(newFilter);
-        saveCustomFilters(customFilters);
-
-        input.value = '';
-    }
-});
-
-/* Event listener for adding new exclude filter */
-document.getElementById('add-exclude-filter-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const input = document.getElementById('new-exclude-filter-input');
-    const newExcludeFilter = input.value.trim();
-    if (newExcludeFilter && !excludeFilters.includes(newExcludeFilter)) {
-        // Create toggle button
-        createToggleButton(newExcludeFilter, false, 'exclude-filters');
-
-        // Save to custom exclude filters
-        const customExcludeFilters = await getCustomExcludeFilters();
-        customExcludeFilters.push(newExcludeFilter);
-        saveCustomExcludeFilters(customExcludeFilters);
-
-        input.value = '';
-    }
-});
