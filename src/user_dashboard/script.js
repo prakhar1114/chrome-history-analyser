@@ -3,23 +3,30 @@ import { getHistoryWithTopNStats } from './history.js';
 import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
 import { markdownToHtml, cleanInput } from './utils.js';
 import './styles.css';
-let startDate, endDate;
-const defaultDateRange = '1w';
+
 const enableBasicSummary = false;
+
+const state = {
+    startDate: null,
+    endDate: null
+}
 
 // Global variables to store selected filters
 let selectedFilters = [];
 let excludeFilters = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const defaultDateRange = '1w';
+
     addDateRangeButtons(defaultDateRange);
     addRefreshButton();
-    setDateRange(defaultDateRange);
+    let { startDate, endDate } = setDateRange(defaultDateRange, state);
+
     // Initialize category and exclude filters
     await initializeFilters();
-    addOrUpdateRecentHistoryWidget();
+    addOrUpdateRecentHistoryWidget(startDate, endDate);
     if (enableBasicSummary) {
-      addOrUpdateBasicSummaryWidget();
+      addOrUpdateBasicSummaryWidget(startDate, endDate);
     }
     enableResizing();
   
@@ -121,7 +128,7 @@ function addDateRangeButtons(defaultDateRange) {
       }
 
       button.addEventListener('click', () => {
-          setDateRange(data.range);
+          setDateRange(data.range, state);
           loadContent();
 
           // Remove 'selected' class from all buttons
@@ -137,9 +144,9 @@ function addDateRangeButtons(defaultDateRange) {
   });
 }
 
-function setDateRange(range) {
+function setDateRange(range, state) {
   const today = new Date();
-
+  let startDate, endDate;
   switch (range) {
       case '24h':
           startDate = new Date(today);
@@ -181,10 +188,14 @@ function setDateRange(range) {
   // Update display dates
   document.getElementById('display-start-date').textContent = startDate.toLocaleDateString();
   document.getElementById('display-end-date').textContent = endDate.toLocaleDateString();
+
+  state.startDate = startDate;
+  state.endDate = endDate;
+  return { startDate, endDate };
 }
 
 /* Add Overall Summary Widget */
-async function addOrUpdateRecentHistoryWidget() {
+async function addOrUpdateRecentHistoryWidget(startDate, endDate) {
   const newWidget = createOrGetWidget('recent-history', 'Recent History');
 
   // delete children containing *recent-history-contents*
@@ -192,7 +203,7 @@ async function addOrUpdateRecentHistoryWidget() {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  createRecentHistoryElement().then((widget) => {
+  createRecentHistoryElement(startDate, endDate).then((widget) => {
       newWidget.appendChild(widget);
       // adjust size of newWidget
       console.log('adjusting size of newWidget');
@@ -200,7 +211,7 @@ async function addOrUpdateRecentHistoryWidget() {
   });
 }
 
-async function addOrUpdateBasicSummaryWidget() {
+async function addOrUpdateBasicSummaryWidget(startDate, endDate) {
   const newWidget = createOrGetWidget('basic-summary', 'Summary');
 
   // delete children containing *contents*
@@ -208,20 +219,20 @@ async function addOrUpdateBasicSummaryWidget() {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  await createBasicSummaryElement(newWidget);
+  await createBasicSummaryElement(newWidget, startDate, endDate);
 }
 
 /* Load Content Based on Date Range */
 async function loadContent() {
   console.log('Selected Filters:', selectedFilters);
   console.log('Exclude Filters:', excludeFilters);
-  await addOrUpdateRecentHistoryWidget();
+  await addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
   if (enableBasicSummary) {
-    await addOrUpdateBasicSummaryWidget();
+    await addOrUpdateBasicSummaryWidget(state.startDate, state.endDate);
   }
 }
 
-async function createRecentHistoryElement() {
+async function createRecentHistoryElement(startDate, endDate) {
   const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const container = document.createElement('div');
   container.className = 'history-container';
@@ -293,7 +304,7 @@ async function createRecentHistoryElement() {
   return container;
 }
 
-async function createBasicSummaryElement(newWidget) {
+async function createBasicSummaryElement(newWidget, startDate, endDate) {
   const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, selectedFilters, excludeFilters);
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
