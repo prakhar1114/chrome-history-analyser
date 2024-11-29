@@ -11,7 +11,7 @@ const state = {
     selectedFilters: [],
     tempSelectedFilters: null,
     excludeFilters: [],
-    enableBasicSummary: false,
+    enableBasicSummary: true,
     enableWordCloud: true
 }
 
@@ -221,16 +221,16 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate) {
 }
 
 /* Load Content Based on Date Range */
-async function loadContent() {
+async function loadContent(rerenderWordCloud = true) {
   console.log('Selected Filters:', state.selectedFilters);
   console.log('Exclude Filters:', state.excludeFilters);
+  if (state.enableWordCloud && rerenderWordCloud) {
+    const wordDistribution = await getWordDistribution(state.startDate, state.endDate, state.selectedFilters, state.excludeFilters);
+    addOrUpdateWordCloudWidget(wordDistribution, handleWordSelect, handleWordDeselect);
+  }
   addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
   if (state.enableBasicSummary) {
     addOrUpdateBasicSummaryWidget(state.startDate, state.endDate);
-  }
-  if (state.enableWordCloud) {
-    const wordDistribution = await getWordDistribution(state.startDate, state.endDate, state.selectedFilters, state.excludeFilters);
-    addOrUpdateWordCloudWidget(wordDistribution, handleWordSelect, handleWordDeselect);
   }
 }
 
@@ -617,8 +617,7 @@ function handleWordSelect(word) {
         state.tempSelectedFilters = state.selectedFilters;
     }
     state.selectedFilters = [word];
-    addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
-
+    loadContent(false);
 }
 
 /**
@@ -630,7 +629,7 @@ async function handleWordDeselect(word) {
     if (state.tempSelectedFilters) {
         state.selectedFilters = state.tempSelectedFilters;
         state.tempSelectedFilters = null;
-        addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
+        loadContent(false);
     }
 }
 
@@ -638,6 +637,7 @@ async function handleWordDeselectReset() {
     if (state.tempSelectedFilters) {
         state.selectedFilters = state.tempSelectedFilters;
         state.tempSelectedFilters = null;
-        addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);   
+        loadContent(false);
     }
+
 }
