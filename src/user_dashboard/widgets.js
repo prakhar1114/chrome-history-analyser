@@ -1,55 +1,62 @@
-/* Enable Resizing */
-function enableResizing() {
-    const resizableElements = document.querySelectorAll('.resizable');
+import Masonry from 'masonry-layout'; // Ensure Masonry is imported
+
+// /* Enable Resizing */
+// function enableResizing() {
+//     const resizableElements = document.querySelectorAll('.resizable');
   
-    resizableElements.forEach(element => {
-      const resizeHandle = element.querySelector('.resize-handle');
-      let isResizing = false;
+//     resizableElements.forEach(element => {
+//       const resizeHandle = element.querySelector('.resize-handle');
+//       let isResizing = false;
   
-      resizeHandle.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        isResizing = true;
-        document.body.style.cursor = 'se-resize';
-        element.classList.add('resizing');
+//       resizeHandle.addEventListener('mousedown', (e) => {
+//         e.preventDefault();
+//         isResizing = true;
+//         document.body.style.cursor = 'se-resize';
+//         element.classList.add('resizing');
   
-        const startWidth = element.offsetWidth;
-        const startHeight = element.offsetHeight;
-        const startX = e.clientX;
-        const startY = e.clientY;
+//         const startWidth = element.offsetWidth;
+//         const startHeight = element.offsetHeight;
+//         const startX = e.clientX;
+//         const startY = e.clientY;
   
-        const onMouseMove = (e) => {
-          if (!isResizing) return;
+//         const onMouseMove = (e) => {
+//           if (!isResizing) return;
   
-          const currentWidth = startWidth + (e.clientX - startX);
-          const currentHeight = startHeight + (e.clientY - startY);
+//           const currentWidth = startWidth + (e.clientX - startX);
+//           const currentHeight = startHeight + (e.clientY - startY);
   
-          // Set minimum dimensions
-          const minWidth = 200;
-          const minHeight = 100;
+//           // Set minimum dimensions
+//           const minWidth = 200;
+//           const minHeight = 100;
   
-          element.style.width = `${Math.max(currentWidth, minWidth)}px`;
-          element.style.height = `${Math.max(currentHeight, minHeight)}px`;
-        };
+//           element.style.width = `${Math.max(currentWidth, minWidth)}px`;
+//           element.style.height = `${Math.max(currentHeight, minHeight)}px`;
+//         };
   
-        const onMouseUp = () => {
-          isResizing = false;
-          document.body.style.cursor = 'default';
-          element.classList.remove('resizing');
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onMouseUp);
+//         const onMouseUp = () => {
+//           isResizing = false;
+//           document.body.style.cursor = 'default';
+//           element.classList.remove('resizing');
+//           window.removeEventListener('mousemove', onMouseMove);
+//           window.removeEventListener('mouseup', onMouseUp);
   
-          // Save dimensions
-          saveWidgetSize(element.id, element.style.width, element.style.height);
-        };
+//           // Save dimensions
+//           saveWidgetSize(element.id, element.style.width, element.style.height);
+          
+//           // Trigger Masonry layout update
+//           if (window.masonryInstance) {
+//               window.masonryInstance.layout();
+//           }
+//         };
   
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-      });
+//         window.addEventListener('mousemove', onMouseMove);
+//         window.addEventListener('mouseup', onMouseUp);
+//       });
   
-      // Load saved dimensions
-      loadWidgetSize(element.id, element);
-    });
-  }
+//       // Load saved dimensions
+//       loadWidgetSize(element.id, element);
+//     });
+//   }
   
   /* Save Widget Size */
   function saveWidgetSize(widgetId, width, height) {
@@ -93,7 +100,8 @@ function enableResizing() {
   
     // Create a new widget element
     const newWidget = document.createElement('div');
-    newWidget.className = 'widget resizable';
+    // newWidget.className = 'widget resizable';
+    newWidget.className = 'widget';
   
     // Generate a unique ID for the new widget
     newWidget.id = uniqueID;
@@ -109,6 +117,13 @@ function enableResizing() {
     // Append the new widget to the widget container
     widgetContainer.appendChild(newWidget);
   
+    // Trigger Masonry to layout the new widget
+    if (window.masonryInstance) {
+        console.log('adding new widget to masonry');
+        window.masonryInstance.appended(newWidget);
+        window.masonryInstance.layout();
+    }
+    // addNewWidget(newWidget);
     return newWidget;
   }
 
@@ -125,8 +140,31 @@ function enableResizing() {
     });
     // console.log("New height: ", height);
     widget.style.height = `${height + offset}px`;
-  }
+    
+    // Trigger Masonry to layout after size adjustment
+    if (window.masonryInstance) {
+        window.masonryInstance.layout();
+    }
+}
+
+function initializeMasonry() {
+    const widgetContainer = document.querySelector('.widget-container');
+    window.masonryInstance = new Masonry(widgetContainer, {
+        itemSelector: '.widget',
+        columnWidth: '.grid-sizer',
+        percentPosition: true,   // Enables responsive layout
+        gutter: 10,
+        horizontalOrder: true
+    });
+}
+
+function addNewWidget(widget) {
+    window.masonryInstance.appended(widget);
+    window.masonryInstance.layout();
+}
 
 
-export { enableResizing, saveWidgetSize, loadWidgetSize, createOrGetWidget, adjustWidgetSize };
+export { saveWidgetSize, loadWidgetSize, createOrGetWidget, adjustWidgetSize, initializeMasonry, addNewWidget };
+
+  
   

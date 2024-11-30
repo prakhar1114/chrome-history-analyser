@@ -30,7 +30,7 @@ function createWordCloudElement(widget, wordDistribution, onSelectWord, onDesele
     widget.appendChild(wordCloudContainer);
 
     // Define dimensions for the word cloud
-    const width = 500;
+    const width = 400;
     const height = 400;
 
     // Create an SVG element for the word cloud: canvas where it renders

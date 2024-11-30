@@ -1,6 +1,6 @@
 import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
-import { enableResizing, createOrGetWidget, adjustWidgetSize } from './widgets.js';
+import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
 import { markdownToHtml, cleanInput } from './utils.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
@@ -24,8 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize category and exclude filters
     await initializeFilters();
+    initializeMasonry();
     await loadContent();
-    enableResizing();
+    // enableResizing();
   
     document.getElementById('refresh-button').addEventListener('click', async () => {
       await handleWordDeselectReset();

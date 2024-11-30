@@ -84,27 +84,105 @@ body.dark-mode .scrollable-titles::-webkit-scrollbar-thumb {
     background-color: #218838;
 }
 
+/* Modified widget-container for Masonry */
 .widget-container {
-    display: flex;
-    /* flex-direction: column; */
-    /* align-items: center; */
-    padding: 20px;
+    width: 100%;
+    /* max-width: 1200px; Adjust as needed */
+    margin: 0 auto;
+    position: relative; /* Required for Masonry */
+    /* Enable vertical scrolling only */
+    /* max-height: 100vh; Adjust based on your layout */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
+/* Grid Sizer */
+.grid-sizer {
+    width: 480px; /* Three-column layout */
+    /* Optional: Hide the grid-sizer */
+    visibility: hidden;
+}
+
+/* Widget Styles */
 .widget {
-    width: 90%;
-    max-width: 600px;
+    /* width: 500px; Must match grid-sizer for column count */
+    width: 470px;
     background-color: #ffffff;
-    margin: 20px 20px;
-    padding: 20px;
+    margin-bottom: 10px; /* Vertical spacing */
+    padding: 10px;
+    margin-inline: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
-    position: relative;
-    transition: box-shadow 0.3s;
-    display: flex;
-    flex-direction: column;
+    position: absolute; /* Masonry handles positioning */
+    transition: box-shadow 0.3s, width 0.3s, height 0.3s, top 0.3s, left 0.3s;
+    /* Remove flex properties to prevent conflicts */
+    /* display: flex;
+    flex-direction: column; */
 }
+
+/* #wordcloud-main,
+#recent-history,
+#basic-summary {
+} */
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .grid-sizer,
+    .widget {
+        width: 50%; /* Two columns */
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-sizer,
+    .widget {
+        width: 100%; /* Single column */
+    }
+}
+
+/* Additional Styles (Ensure no Flexbox on widget-container or widgets) */
+
+/* Resizable widget container */
+/* .resizable {
+    position: relative;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    overflow: auto;
+    transition: height 0.2s ease, width 0.2s ease;
+    min-width: 200px;
+    min-height: 100px;
+} */
+
+/* .resize-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: 0;
+    bottom: 0;
+    cursor: se-resize;
+    z-index: 10;
+}
+
+.resize-handle::after {
+    content: "\f424";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666;
+}
+
+.resizing {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.resizing .resize-handle {
+    transform: rotate(45deg);
+} */
 
 .widget:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -123,12 +201,15 @@ body.dark-mode .scrollable-titles::-webkit-scrollbar-thumb {
     font-size: 1.5em;
 }
 
-.resize-handle {
-    width: 15px;
-    height: 15px;
+/* .resize-handle {
+    width: 10px;
+    height: 10px;
     background-color: #ccc;
     cursor: se-resize;
-    border-radius: 3px;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    border-radius: 50%;
 }
 
 .resize-handle::after {
@@ -141,13 +222,13 @@ body.dark-mode .scrollable-titles::-webkit-scrollbar-thumb {
     text-align: center;
     line-height: 15px;
     color: #585858;
-}
+} */
 
-.resizable .resize-handle {
+/* .resizable .resize-handle {
     position: absolute;
     bottom: 5px;
     right: 5px;
-}
+} */
 
 .widget-content {
     margin-top: 15px;
@@ -337,13 +418,6 @@ button:focus {
     display: block; /* Ensure block display for grid */
 }
 
-/* Responsive adjustments for two columns */
-@media (max-width: 768px) {
-    .scrollable-titles ul {
-        grid-template-columns: 1fr; /* Single column on smaller screens */
-    }
-}
-
 /* Remove default list styles */
 .titles-container ul {
     list-style-type: none;
@@ -353,7 +427,7 @@ button:focus {
 
 /* Individual title items */
 .titles-container li {
-    margin-bottom: 2px; /* Further reduced from 4px to 2px */
+    margin-bottom: 2px; /* Further reduced spacing */
     transition: background-color 0.2s;
     border-radius: 4px;
     padding: 3px 5px; /* Reduced padding for a tighter layout */
@@ -579,51 +653,6 @@ button:focus {
     }
 }
 
-/* Optional: Style adjustments for "Exclude Tags" if needed */
-
-/* Resizable widget container */
-.resizable {
-    position: relative;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    overflow: auto;
-    transition: height 0.2s ease, width 0.2s ease;
-    min-width: 200px;
-    min-height: 100px;
-}
-
-/* Resize handle */
-.resize-handle {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    right: 0;
-    bottom: 0;
-    cursor: se-resize;
-    z-index: 10;
-}
-
-.resize-handle::after {
-    content: "\f424"; /* fa-expand-arrows-alt */
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #666;
-}
-
-/* Style when resizing */
-.resizing {
-    border-color: #007bff;
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
-}
-
-.resizing .resize-handle {
-    transform: rotate(45deg);
-}
-
 /* Widget header */
 .widget-header {
     padding: 10px;
@@ -648,17 +677,17 @@ button:focus {
 }
 
 /* Manage content overflow */
-.resizable {
+/* .resizable {
     overflow: auto;
-}
+} */
 
 /* Responsive design for smaller screens */
-@media (max-width: 600px) {
+/* @media (max-width: 600px) {
     .resizable {
         width: 100%;
         height: auto;
     }
-}
+} */
 
 .word-selected {
     fill: #FF4500; /* Highlight color (e.g., OrangeRed) */

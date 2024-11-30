@@ -3,7 +3,8 @@
     "@huggingface/transformers": "^3.0.2",
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
-    "fuse.js": "^7.0.0"
+    "fuse.js": "^7.0.0",
+    "masonry-layout": "^4.2.2"
   },
   "name": "chrome-history-analyser",
   "version": "1.0.0",
