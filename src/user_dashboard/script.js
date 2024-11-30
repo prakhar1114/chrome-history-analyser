@@ -546,15 +546,20 @@ function createToggleButton(label, isDefault = false, filterType = 'category-fil
             }
             saveSelectedExcludeFilters();
         } else {
-            const index = state.selectedFilters.indexOf(label);
-            if (index > -1) {
-                state.selectedFilters.splice(index, 1);
-                button.classList.remove('active');
+            if (state.tempSelectedFilters === null) {
+                const index = state.selectedFilters.indexOf(label);
+                if (index > -1) {
+                    state.selectedFilters.splice(index, 1);
+                    button.classList.remove('active');
+                } else {
+                    state.selectedFilters.push(label);
+                    button.classList.add('active');
+                }
+                saveSelectedFilters();
             } else {
-                state.selectedFilters.push(label);
-                button.classList.add('active');
+                state.selectedFilters = state.tempSelectedFilters;
+                state.tempSelectedFilters = null;
             }
-            saveSelectedFilters();
         }
         loadContent();
     });
