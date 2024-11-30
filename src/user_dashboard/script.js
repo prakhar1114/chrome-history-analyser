@@ -343,11 +343,15 @@ async function createBasicSummaryElement(newWidget, startDate, endDate, signal) 
     } catch (error) {
         if (error.name === 'AbortError') {
             console.log('Summarization task was aborted.');
-            newWidget.innerHTML = '';
-            adjustWidgetSize(newWidget, [], 20);
+            
+            while (newWidget.lastChild && newWidget.lastChild.className && newWidget.lastChild.className.includes('contents')) {
+                newWidget.removeChild(newWidget.lastChild);
+            }
+
+            adjustWidgetSize(newWidget, ['.widget-header'], 20);
             return;
           } else {
-            console.error('Error during summarization:', error);
+            console.log('Error during summarization:', error);
             continue;
           }
     }
