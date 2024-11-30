@@ -12,7 +12,8 @@ const state = {
     tempSelectedFilters: null,
     excludeFilters: [],
     enableBasicSummary: true,
-    enableWordCloud: true
+    enableWordCloud: true,
+    summaryAbortController: null,
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -210,7 +211,7 @@ async function addOrUpdateRecentHistoryWidget(startDate, endDate) {
   });
 }
 
-async function addOrUpdateBasicSummaryWidget(startDate, endDate) {
+async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
   const newWidget = createOrGetWidget('basic-summary', 'Summary');
 
   // delete children containing *contents*
@@ -218,20 +219,33 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate) {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  await createBasicSummaryElement(newWidget, startDate, endDate);
+  await createBasicSummaryElement(newWidget, startDate, endDate, signal);
 }
 
 /* Load Content Based on Date Range */
 async function loadContent(rerenderWordCloud = true) {
   console.log('Selected Filters:', state.selectedFilters);
   console.log('Exclude Filters:', state.excludeFilters);
+  
+  // Abort any ongoing summarization
+  if (state.summaryAbortController) {
+    state.summaryAbortController.abort();
+    console.log('Previous summarization aborted.');
+  }
+
+  // Create a new AbortController for the current operation
+  state.summaryAbortController = new AbortController();
+  const { signal } = state.summaryAbortController;
+
   if (state.enableWordCloud && rerenderWordCloud) {
     const wordDistribution = await getWordDistribution(state.startDate, state.endDate, state.selectedFilters, state.excludeFilters);
     addOrUpdateWordCloudWidget(wordDistribution, handleWordSelect, handleWordDeselect);
   }
+
   addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
+
   if (state.enableBasicSummary) {
-    addOrUpdateBasicSummaryWidget(state.startDate, state.endDate);
+    addOrUpdateBasicSummaryWidget(state.startDate, state.endDate, signal);
   }
 }
 
@@ -307,7 +321,7 @@ async function createRecentHistoryElement(startDate, endDate) {
   return container;
 }
 
-async function createBasicSummaryElement(newWidget, startDate, endDate) {
+async function createBasicSummaryElement(newWidget, startDate, endDate, signal) {
   const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
@@ -322,7 +336,21 @@ async function createBasicSummaryElement(newWidget, startDate, endDate) {
 
   // Summarize each chunk and append to the result
   for (const chunk of chunks) {
-    let result = await summarize(cleanInput(chunk));
+
+    let result;
+    try {
+      result = await summarize(cleanInput(chunk), signal);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.log('Summarization task was aborted.');
+            newWidget.innerHTML = '';
+            adjustWidgetSize(newWidget, [], 20);
+            return;
+          } else {
+            console.error('Error during summarization:', error);
+            continue;
+          }
+    }
 
     let textElement = document.createElement('p');
     // Use a class instead of an ID to allow multiple elements

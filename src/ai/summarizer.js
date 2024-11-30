@@ -29,17 +29,40 @@ async function getSummarizer() {
       }
 }
 
-async function summarize(text) {
+async function summarize(text, signal) {
     try {
-        const summarizer = await getSummarizer();
-        const result = await summarizer.summarize(text, {
-            context: 'Give interesting insights about user behaviours from the titles. Give important information about the user\'s interests and habits.',
+        if (signal.aborted) {
+            throw new DOMException('Operation aborted', 'AbortError');
+        }
+
+        const summarizer = await getSummarizer(signal);
+
+        // Listen for abort event to cancel summarization
+        return new Promise(async (resolve, reject) => {
+            const onAbort = () => {
+                console.log('Abort signal received. Destroying summarizer.');
+                summarizer.destroy();
+                reject(new DOMException('Operation aborted', 'AbortError'));
+            };
+
+            signal.addEventListener('abort', onAbort);
+
+            try {
+                const result = await summarizer.summarize(text, {
+                    context: 'Give interesting insights about user behaviours from the titles. Give important information about the user\'s interests and habits.',
+                });
+                await summarizer.destroy();
+                resolve(result);
+            } catch (error) {
+                await summarizer.destroy();
+                reject(error);
+            } finally {
+                signal.removeEventListener('abort', onAbort);
+            }
         });
-        await summarizer.destroy();
-        return result;
     } catch (error) {
         console.log('Error during summarization:', error);
-        return '';
+        throw error;
     }
 }
 
