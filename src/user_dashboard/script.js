@@ -1,7 +1,8 @@
+import { marked } from 'marked';
 import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
-import { markdownToHtml, cleanInput } from './utils.js';
+import { cleanInput } from './utils.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
 
@@ -334,12 +335,14 @@ async function createBasicSummaryElement(newWidget, startDate, endDate, signal) 
     chunks.push(historyItemTitles.slice(i, i + 2000));
   }
 
+  const context = 'Summarize user behaviour from the titles. Return a concise summary about different points in markdown format. For each part of summary, use format: heading, description, keywords. Dont talk about the same thing in multiple parts. Dont talk about very generic things.';
+
   // Summarize each chunk and append to the result
   for (const chunk of chunks) {
 
     let result;
     try {
-      result = await summarize(cleanInput(chunk), signal);
+      result = await summarize(cleanInput(chunk), context, signal);
     } catch (error) {
         if (error.name === 'AbortError') {
             console.log('Summarization task was aborted.');
@@ -360,7 +363,7 @@ async function createBasicSummaryElement(newWidget, startDate, endDate, signal) 
     // Use a class instead of an ID to allow multiple elements
     textElement.classList.add('basic-summary-contents');
 
-    textElement.innerHTML = markdownToHtml(result);
+    textElement.innerHTML = marked.parse(result);
     newWidget.appendChild(textElement);
     adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
   }

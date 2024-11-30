@@ -29,7 +29,7 @@ async function getSummarizer() {
       }
 }
 
-async function summarize(text, signal) {
+async function summarize(text, context, signal) {
     try {
         if (signal.aborted) {
             throw new DOMException('Operation aborted', 'AbortError');
@@ -48,9 +48,7 @@ async function summarize(text, signal) {
             signal.addEventListener('abort', onAbort);
 
             try {
-                const result = await summarizer.summarize(text, {
-                    context: 'Give interesting insights about user behaviours from the titles. Give important information about the user\'s interests and habits.',
-                });
+                const result = await summarizer.summarize(text, {context});
                 await summarizer.destroy();
                 resolve(result);
             } catch (error) {

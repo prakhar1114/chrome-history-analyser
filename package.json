@@ -4,6 +4,7 @@
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
     "fuse.js": "^7.0.0",
+    "marked": "^15.0.3",
     "masonry-layout": "^4.2.2"
   },
   "name": "chrome-history-analyser",
