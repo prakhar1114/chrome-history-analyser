@@ -5,7 +5,8 @@ import { marked } from 'marked';
 import { fisherYatesShuffle } from './utils.js';
 import { adjustWidgetSize } from './widgets.js';
 
-async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal) {
+async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, context, signal) {
+    console.log('Creating detailed summary');
     const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
   
     // Append all history items to a single string
@@ -16,8 +17,7 @@ async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, sig
     for (let i = 0; i < historyItemTitles.length; i += 2000) {
       chunks.push(historyItemTitles.slice(i, i + 2000));
     }
-  
-    const context = 'Summarize user behaviour from the titles. Return a concise summary about different points in markdown format. For each part of summary, use format: heading, description, keywords. Dont talk about the same thing in multiple parts. Dont talk about very generic things.';
+    console.log(chunks.length);
   
     // Summarize each chunk and append to the result
     for (const chunk of chunks) {
@@ -53,7 +53,8 @@ async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, sig
     }
   }
 
-async function createBriefSummaryElement(newWidget, topNHostnamesWithTitles, signal) {
+async function createBriefSummaryElement(newWidget, topNHostnamesWithTitles, context, signal) {
+    console.log('Creating brief summary');
     const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
     // shuffle history items
@@ -67,13 +68,10 @@ async function createBriefSummaryElement(newWidget, topNHostnamesWithTitles, sig
 
     // Create chunks of 4000 characters
     const chunks = [];
-    for (let i = 0; i < historyItemTitles.length; i += 3000) {
-        chunks.push(historyItemTitles.slice(i, i + 3000));
+    for (let i = 0; i < historyItemTitles.length; i += 2000) {
+        chunks.push(historyItemTitles.slice(i, i + 2000));
     }
     console.log(chunks.length);
-
-    const context = 'Summarize user history from the titles. Return a concise summary about different points in markdown format. For each part of summary, use format: heading, description, keywords. Dont talk about the same thing in multiple parts. Dont talk about very generic things.';
-
 
     let textElement = document.createElement('p');
     textElement.classList.add('basic-summary-contents');
@@ -106,7 +104,8 @@ async function createBriefSummaryElement(newWidget, topNHostnamesWithTitles, sig
     }
 }
 
-async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writecontext, signal) {
+async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writecontext, seedPrompt, signal) {
+    console.log('Write about history');
     const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
     // shuffle history items
@@ -120,8 +119,8 @@ async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles
 
     // Create chunks of 4000 characters
     const chunks = [];
-    for (let i = 0; i < historyItemTitles.length; i += 3000) {
-        chunks.push(historyItemTitles.slice(i, i + 3000));
+    for (let i = 0; i < historyItemTitles.length; i += 2000) {
+        chunks.push(historyItemTitles.slice(i, i + 2000));
     }
     console.log(chunks.length);
 
@@ -130,6 +129,7 @@ async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles
     newWidget.appendChild(textElement);
 
     let chunk = chunks[0]
+    chunk = seedPrompt + "\n\n" + chunk;
   
     let stream;
     try {

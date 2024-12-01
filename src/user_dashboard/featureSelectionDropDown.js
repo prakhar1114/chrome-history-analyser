@@ -1,3 +1,6 @@
+import { featureObjects } from './featureLibrary.js';
+
+
 function renderFeatureDropdown(widgetHeader, featureSelectionCallback) { 
     // Create Dropdown Container
     const dropdownContainer = document.createElement('div');
@@ -13,36 +16,24 @@ function renderFeatureDropdown(widgetHeader, featureSelectionCallback) {
     const dropdownMenu = document.createElement('div');
     dropdownMenu.className = 'dropdown-content';
 
-    const features = [
-        "Detailed Summary",
-        "Brief Summary",
-        "What did I learn?",
-        "Tell me a joke about something from my history",
-        "Interesting thing from my history"
-    ];
-
-    features.forEach(feature => {
+    featureObjects.forEach(featureObject => {
         const menuItem = document.createElement('a');
         menuItem.href = '#';
-        menuItem.textContent = feature;
+        menuItem.textContent = featureObject.feature;
         menuItem.addEventListener('click', async (e) => {
             e.preventDefault();
             // Update selectedFeature in Chrome storage
-            await chrome.storage.local.set({ selectedFeature: feature }, () => {
-                console.log(`Selected Feature set to: ${feature}`);
+            await chrome.storage.local.set({ selectedFeature: featureObject }, () => {
+                console.log(`Selected Feature set to: ${featureObject.feature}`);
             });
-            // Update state.selectedFeature and rerun addOrUpdateBasicSummaryWidget
-            // state.selectedFeature = feature;
-            // addOrUpdateBasicSummaryWidget(state.startDate, state.endDate, state.summaryAbortController ? state.summaryAbortController.signal : null);
-
             // run callback
-            featureSelectionCallback(feature);
+            featureSelectionCallback(featureObject);
 
             // Close the dropdown
             dropdownMenu.style.display = 'none';
 
             // update widget header text
-            widgetHeader.querySelector('h2').textContent = feature;
+            widgetHeader.querySelector('h2').textContent = featureObject.feature;
         });
         dropdownMenu.appendChild(menuItem);
     });

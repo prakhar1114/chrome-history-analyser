@@ -744,13 +744,13 @@ button:focus {
     display: none;
     position: absolute;
     background-color: #f9f9f9;
-    min-width: 220px;
+    /* Set width to match widget-header */
+    min-width: 450px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
     border-radius: 4px;
     overflow: hidden;
     right: 0; /* Align the right edge with the button */
-    /* left: 0; */
 }
 
 /* Dropdown Content Links */
@@ -760,6 +760,9 @@ button:focus {
     text-decoration: none;
     display: block;
     transition: background-color 0.2s;
+    font-size: 1.5em; /* Increased font size to match widget-header */
+    width: 100%; /* Make each dropdown item take full width of the dropdown */
+    box-sizing: border-box; /* Ensures padding is included in the width */
 }
 
 .dropdown-content a:hover {

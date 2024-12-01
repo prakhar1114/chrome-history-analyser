@@ -3,6 +3,7 @@ import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widget
 import { renderFeatureDropdown } from './featureSelectionDropDown.js';
 import { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement } from './summaryFeatures.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
+import { featureObjects } from './featureLibrary.js';
 import './styles.css';
 
 const state = {
@@ -14,7 +15,7 @@ const state = {
     enableBasicSummary: true,
     enableWordCloud: true,
     summaryAbortController: null,
-    selectedFeature: "Detailed Summary",
+    selectedFeature: featureObjects[0],
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -217,7 +218,7 @@ async function addOrUpdateRecentHistoryWidget(startDate, endDate) {
 }
 
 async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
-  const newWidget = createOrGetWidget('basic-summary', state.selectedFeature);
+  const newWidget = createOrGetWidget('basic-summary', state.selectedFeature.feature);
 
   // fetch widget-header and add a drop down menu with buttons with callbacks to update state.selectedFeature
   const widgetHeader = newWidget.querySelector('.widget-header');
@@ -233,30 +234,14 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
   const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 50, state.selectedFilters, state.excludeFilters);
 
 
-  if (state.selectedFeature === "Detailed Summary") {
-    await createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal);
-  } else if (state.selectedFeature === "Brief Summary") {
-    await createBriefSummaryElement(newWidget, topNHostnamesWithTitles, signal);
-  } else if (state.selectedFeature === "Interesting thing from my history") {
-    
-    const writeContext = 'Generate a list of interesting things from the user history from the titles. It should include the user history in a creative way. Add references to the user history in the list.';
-    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
-
-  } else if (state.selectedFeature === "What did I learn?") {
-    
-    const writeContext = 'Generate a list of things I learned from my history from the titles. It should include the user history in a creative way. Add references to the user history in the list.';
-    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
-
-  } else if (state.selectedFeature === "Tell me a joke about something from my history") {
-
-    const writeContext = 'Generate a joke about the user history from the titles. It should include the user history in a creative way. Add references to the user history in the joke.';
-    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
-
-  } else if (state.selectedFeature === "Write a funny poem about my history") {
-    
-    const writeContext = 'Generate a funny and witty poem about the user history from the titles. It should include the user history in a creative way. Add references to the user history in the poem.';
-    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
-
+  if (state.selectedFeature.feature === "Detailed Summary") {
+    await createBasicSummaryElement(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, signal);
+  } else {
+    if (state.selectedFeature.model === 'summarizer') {
+      await createBriefSummaryElement(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, signal);
+    } else if (state.selectedFeature.model === 'writer') {
+      await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, state.selectedFeature.seed_prompt, signal);
+    }
   }
 }
 
@@ -289,8 +274,8 @@ async function loadContent(rerenderWordCloud = true, rerenderRecentHistory = tru
   }
 }
 
-function loadRequestedFeature(feature) {
-    state.selectedFeature = feature;
+function loadRequestedFeature(featureObject) {
+    state.selectedFeature = featureObject;
     saveSelectedFeature();
     loadContent(false, false, true);
 }
