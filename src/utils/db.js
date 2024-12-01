@@ -33,23 +33,23 @@ export async function openDatabase() {
   });
 }
 
-export async function clearDatabase() {
-  await openDatabase();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['history'], 'readwrite');
-    const objectStore = transaction.objectStore('history');
-    const request = objectStore.clear();
-    console.log("Clearing database");
+// export async function clearDatabase() {
+//   await openDatabase();
+//   return new Promise((resolve, reject) => {
+//     const transaction = db.transaction(['history'], 'readwrite');
+//     const objectStore = transaction.objectStore('history');
+//     const request = objectStore.clear();
+//     console.log("Clearing database");
 
-    request.onsuccess = () => {
-      resolve();
-    };
+//     request.onsuccess = () => {
+//       resolve();
+//     };
 
-    request.onerror = (event) => {
-      reject(event.target.errorCode);
-    };
-  });
-}
+//     request.onerror = (event) => {
+//       reject(event.target.errorCode);
+//     };
+//   });
+// }
 
 export async function addHistoryItem(item) {
   await openDatabase();

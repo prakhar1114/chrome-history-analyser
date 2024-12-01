@@ -3,13 +3,13 @@ import './popup-styles.css';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  document.getElementById('indexOldDataBtn').addEventListener('click', () => {
-    // Send message to background script to index old data
-    chrome.runtime.sendMessage({ action: 'indexOldData' }, (response) => {
-      console.log(response.status);
-      alert('Indexing old data started. This may take a while.');
-    });
-  });
+  // document.getElementById('indexOldDataBtn').addEventListener('click', () => {
+  //   // Send message to background script to index old data
+  //   chrome.runtime.sendMessage({ action: 'indexOldData' }, (response) => {
+  //     console.log(response.status);
+  //     alert('Indexing old data started. This may take a while.');
+  //   });
+  // });
 
   document.getElementById('refreshBtn').addEventListener('click', () => {
     // Send message to background script to index old data
@@ -20,9 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('continueIndexing').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'continueIndexing' }, (response) => {
+    chrome.runtime.sendMessage({ action: 'pauseIndexing' }, (response) => {
       console.log(response.status);
-      alert('Indexing old data continued.');
+      alert('Pausing Indexing');
     });
   });
 

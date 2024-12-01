@@ -64,7 +64,7 @@ async function getPromptAPISession() {
  * @param {string} title - The website title.
  * @returns {Promise<string[]>} - An array of tag strings.
  */
-export async function getTags(title, url) {
+export async function getTags(title, url, signal) {
     const refined_prompt = createRefinedPrompt(sanitizeUrl(url), cleanInput(title));
     const session = await getPromptAPISession();
     let currentSession;
@@ -83,6 +83,11 @@ export async function getTags(title, url) {
     try {
         tags = await currentSession.prompt(refined_prompt);
     } catch (error) {
+        if (signal.aborted) {
+            console.log("getTags aborted during prompt.");
+            await currentSession.destroy();
+            throw new DOMException("Operation aborted", "AbortError");
+        }
         console.log("Error generating tags:", error);
         tags = "";
     }

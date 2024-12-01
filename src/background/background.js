@@ -1,16 +1,23 @@
-import { clearDatabase, addHistoryItem, getAllHistoryItems, checkIfItemExists } from '../utils/db.js';
+import { addHistoryItem, getAllHistoryItems, checkIfItemExists } from '../utils/db.js';
 import { getTags } from '../ai/tags.js';
+let indexingAbortController = null;
 
-async function multiGenerateTagAndStore(historyItems) {
+async function multiGenerateTagAndStore(historyItems, signal) {
     const batchsize = 4;
     for (let i = 0; i < historyItems.length; i += batchsize) {
+
+        if (signal.aborted) {
+          console.log("Tag generation aborted.");
+          throw new DOMException("Operation aborted", "AbortError");
+        }
+
         console.log(`Processing batch ${Math.floor(i / batchsize) + 1}`);
         const batch = historyItems.slice(i, i + batchsize);
-        await Promise.all(batch.map(generateTagAndStore));
+        await Promise.all(batch.map(item => generateTagAndStore(item, signal)));
     }
 }
 
-async function generateTagAndStore(historyItem) {
+async function generateTagAndStore(historyItem, signal) {
     // Check if the item already exists
     const alreadyExists = await checkIfItemExists(historyItem.lastVisitTime);
     if (alreadyExists) {
@@ -19,7 +26,7 @@ async function generateTagAndStore(historyItem) {
 
     let tags;
     try {
-        tags = await getTags(historyItem.title, historyItem.url);
+        tags = await getTags(historyItem.title, historyItem.url, signal);
     } catch (error) {
         // console.error('Error generating tags:', error, `for ${historyItem.id} ${historyItem.url}`);
         return;
@@ -33,18 +40,22 @@ async function generateTagAndStore(historyItem) {
     return;
 }
 
-// Function to index old data
-async function indexOldData() {
-  // TODO: remove later: Clear existing data if needed
-  await clearDatabase();
+// // Function to index old data
+// async function indexOldData() {
+//   // TODO: remove later: Clear existing data if needed
+//   await clearDatabase();
 
-  // Fetch all history items
-  continueIndexing();
-  return;
-}
+//   // Fetch all history items
+//   continueIndexing();
+//   return;
+// }
 
 function continueIndexing() {
     console.log("indexing now");
+
+    // Initialize the AbortController
+    indexingAbortController = new AbortController();
+    const { signal } = indexingAbortController;
 
     // Fetch all history items
     chrome.history.search({
@@ -52,9 +63,19 @@ function continueIndexing() {
       startTime: 0, // From the beginning
       maxResults: 0 // Unlimited
     }, async (historyItems) => {
-      await multiGenerateTagAndStore(historyItems);
+      await multiGenerateTagAndStore(historyItems, signal);
       console.log('Indexing of old data completed successfully.');
     });
+}
+
+function pauseIndexing() {
+  if (indexingAbortController) {
+    indexingAbortController.abort();
+    indexingAbortController = null;
+    console.log("indexing paused");
+  } else {
+      console.log("No indexing process to pause.");
+  }
 }
 
 // New: Listen for new history entries
@@ -129,18 +150,19 @@ async function updateIndexPercentage() {
 
 // Expose indexOldData function to popup.js via message passing
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'indexOldData') {
-    indexOldData().then(() => {
-      sendResponse({ status: 'Indexing completed' });
-    }).catch(error => {
-      sendResponse({ status: 'Error', message: error.message });
-    });
-    return true; // Indicates that the response is asynchronous
-  } else if (request.action === 'displaySummary') {
+  // if (request.action === 'indexOldData') {
+  //   indexOldData().then(() => {
+  //     sendResponse({ status: 'Indexing completed' });
+  //   }).catch(error => {
+  //     sendResponse({ status: 'Error', message: error.message });
+  //   });
+  //   return true; // Indicates that the response is asynchronous
+  // } else 
+  if (request.action === 'displaySummary') {
     chrome.tabs.create({ url: chrome.runtime.getURL("user_dashboard.html") });
-  } else if (request.action === 'continueIndexing') {
-    sendResponse({ status: 'Indexing continued' });
-    continueIndexing();
+  } else if (request.action === 'pauseIndexing') {
+    sendResponse({ status: 'Pausing Indexing' });
+    pauseIndexing();
   } else if (request.action === 'refreshIndexPercentage') {
     updateIndexPercentage().then(() => {
       sendResponse({ status: 'Refresh % updated' });
@@ -150,4 +172,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return true;
   }
 });
+continueIndexing();
 updateIndexPercentage();

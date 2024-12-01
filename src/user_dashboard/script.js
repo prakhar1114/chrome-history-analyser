@@ -40,23 +40,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadContent();
     });
 
-    document.getElementById('dark-mode-toggle').addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        // Optional: Save user preference using localStorage
-        if (document.body.classList.contains('dark-mode')) {
-            localStorage.setItem('theme', 'dark');
-        } else {
-            localStorage.setItem('theme', 'light');
-        }
-    });
+    // document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+    //     document.body.classList.toggle('dark-mode');
+    //     // Optional: Save user preference using localStorage
+    //     if (document.body.classList.contains('dark-mode')) {
+    //         localStorage.setItem('theme', 'dark');
+    //     } else {
+    //         localStorage.setItem('theme', 'light');
+    //     }
+    // });
 
     // Apply saved theme on load
-    window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
-    });
+    // window.addEventListener('DOMContentLoaded', () => {
+    //     const savedTheme = localStorage.getItem('theme');
+    //     if (savedTheme === 'dark') {
+    //         document.body.classList.add('dark-mode');
+    //     }
+    // });
 });
 /* Event listener for adding new category filter */
 document.getElementById('add-filter-form').addEventListener('submit', async (e) => {
