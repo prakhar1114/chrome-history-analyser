@@ -96,6 +96,8 @@ import Masonry from 'masonry-layout'; // Ensure Masonry is imported
       return document.getElementById(uniqueID);
     }
   
+    // explanation to each widget below heading
+  
     const widgetContainer = document.querySelector('.widget-container');
   
     // Create a new widget element

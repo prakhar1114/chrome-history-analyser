@@ -1,7 +1,7 @@
 import { getHistoryWithTopNStats } from './history.js';
 import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
 import { renderFeatureDropdown } from './featureSelectionDropDown.js';
-import { createBasicSummaryElement, createBriefSummaryElement, createInterestingThingElement, createLearnElement, createJokeElement } from './summaryFeatures.js';
+import { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement } from './summaryFeatures.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
 
@@ -238,11 +238,25 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
   } else if (state.selectedFeature === "Brief Summary") {
     await createBriefSummaryElement(newWidget, topNHostnamesWithTitles, signal);
   } else if (state.selectedFeature === "Interesting thing from my history") {
-    await createInterestingThingElement(newWidget, topNHostnamesWithTitles, signal);
+    
+    const writeContext = 'Generate a list of interesting things from the user history from the titles. It should include the user history in a creative way. Add references to the user history in the list.';
+    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
+
   } else if (state.selectedFeature === "What did I learn?") {
-    await createLearnElement(newWidget, topNHostnamesWithTitles, signal);
+    
+    const writeContext = 'Generate a list of things I learned from my history from the titles. It should include the user history in a creative way. Add references to the user history in the list.';
+    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
+
   } else if (state.selectedFeature === "Tell me a joke about something from my history") {
-    await createJokeElement(newWidget, topNHostnamesWithTitles, signal);
+
+    const writeContext = 'Generate a joke about the user history from the titles. It should include the user history in a creative way. Add references to the user history in the joke.';
+    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
+
+  } else if (state.selectedFeature === "Write a funny poem about my history") {
+    
+    const writeContext = 'Generate a funny and witty poem about the user history from the titles. It should include the user history in a creative way. Add references to the user history in the poem.';
+    await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, writeContext, signal);
+
   }
 }
 
