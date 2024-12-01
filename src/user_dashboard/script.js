@@ -1,7 +1,7 @@
 import { getHistoryWithTopNStats } from './history.js';
 import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
 import { renderFeatureDropdown } from './featureSelectionDropDown.js';
-import { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement } from './summaryFeatures.js';
+import { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement, createUsingPromptAPI } from './summaryFeatures.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import { featureObjects } from './featureLibrary.js';
 import './styles.css';
@@ -241,6 +241,8 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
       await createBriefSummaryElement(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, signal);
     } else if (state.selectedFeature.model === 'writer') {
       await createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, state.selectedFeature.seed_prompt, signal);
+    } else if (state.selectedFeature.model === 'prompt') {
+      await createUsingPromptAPI(newWidget, topNHostnamesWithTitles, state.selectedFeature.context, state.selectedFeature.seed_prompt, signal);
     }
   }
 }

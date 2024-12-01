@@ -1,6 +1,7 @@
 import { cleanInput } from './utils.js';
 import { summarizeStreaming } from '../ai/summarizer.js';
 import { writeStreaming } from '../ai/writer.js';
+import { promptAPIStreaming } from '../ai/prompt.js';
 import { marked } from 'marked';
 import { fisherYatesShuffle } from './utils.js';
 import { adjustWidgetSize } from './widgets.js';
@@ -119,8 +120,8 @@ async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles
 
     // Create chunks of 4000 characters
     const chunks = [];
-    for (let i = 0; i < historyItemTitles.length; i += 2000) {
-        chunks.push(historyItemTitles.slice(i, i + 2000));
+    for (let i = 0; i < historyItemTitles.length; i += 1000) {
+        chunks.push(historyItemTitles.slice(i, i + 1000));
     }
     console.log(chunks.length);
 
@@ -154,8 +155,58 @@ async function createWriteAboutHistoryElement(newWidget, topNHostnamesWithTitles
             console.log('Error during summarization:', error);
         }
     }
-
-
 }
 
-export { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement };
+async function createUsingPromptAPI(newWidget, topNHostnamesWithTitles, context, seedPrompt, signal) {
+    console.log('Write using prompt API');
+    const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
+
+    // shuffle history items
+    const shuffledHistoryItems = fisherYatesShuffle(historyItems);
+
+    // select top 100
+    const top100HistoryItems = shuffledHistoryItems.slice(0, 100);
+
+    // Append all history items to a single string
+    const historyItemTitles = top100HistoryItems.map(item => item.title).join(', ');
+
+    // Create chunks of 4000 characters
+    const chunks = [];
+    for (let i = 0; i < historyItemTitles.length; i += 2000) {
+        chunks.push(historyItemTitles.slice(i, i + 2000));
+    }
+    console.log(chunks.length);
+
+    let textElement = document.createElement('p');
+    textElement.classList.add('basic-summary-contents');
+    newWidget.appendChild(textElement);
+
+    let chunk = chunks[0]
+    chunk = seedPrompt + "\n\n" + chunk;
+  
+    let stream;
+    try {
+        stream = await promptAPIStreaming(cleanInput(chunk), context, signal);
+
+        for await (const streamChunk of stream) {
+            textElement.innerHTML = marked.parse(streamChunk);
+            adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
+        }
+
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.log('Prompt API task was aborted.');
+            
+            while (newWidget.lastChild && newWidget.lastChild.className && newWidget.lastChild.className.includes('contents')) {
+                newWidget.removeChild(newWidget.lastChild);
+            }
+
+            adjustWidgetSize(newWidget, ['.widget-header'], 20);
+            return;
+        } else {
+            console.log('Error during prompt API:', error);
+        }
+    }
+}
+
+export { createBasicSummaryElement, createBriefSummaryElement, createWriteAboutHistoryElement, createUsingPromptAPI };
