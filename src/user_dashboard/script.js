@@ -1,9 +1,7 @@
-import { marked } from 'marked';
-import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
-import { renderFeatureDropdown } from './featureSelection.js';
-import { cleanInput } from './utils.js';
+import { renderFeatureDropdown } from './featureSelectionDropDown.js';
+import { createBasicSummaryElement, createBriefSummaryElement, createInterestingThingElement, createLearnElement, createJokeElement } from './summaryFeatures.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
 
@@ -232,14 +230,19 @@ async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 50, state.selectedFilters, state.excludeFilters);
 
 
   if (state.selectedFeature === "Detailed Summary") {
     await createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal);
-  } else {
-    console.log('selectedFeature', state.selectedFeature);
-    console.log("add other features here")
+  } else if (state.selectedFeature === "Brief Summary") {
+    await createBriefSummaryElement(newWidget, topNHostnamesWithTitles, signal);
+  } else if (state.selectedFeature === "Interesting thing from my history") {
+    await createInterestingThingElement(newWidget, topNHostnamesWithTitles, signal);
+  } else if (state.selectedFeature === "What did I learn?") {
+    await createLearnElement(newWidget, topNHostnamesWithTitles, signal);
+  } else if (state.selectedFeature === "Tell me a joke about something from my history") {
+    await createJokeElement(newWidget, topNHostnamesWithTitles, signal);
   }
 }
 
@@ -348,52 +351,6 @@ async function createRecentHistoryElement(startDate, endDate) {
   });
 
   return container;
-}
-
-async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal) {
-  const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
-
-  // Append all history items to a single string
-  const historyItemTitles = historyItems.map(item => item.title).join(', ');
-
-  // Create chunks of 4000 characters
-  const chunks = [];
-  for (let i = 0; i < historyItemTitles.length; i += 2000) {
-    chunks.push(historyItemTitles.slice(i, i + 2000));
-  }
-
-  const context = 'Summarize user behaviour from the titles. Return a concise summary about different points in markdown format. For each part of summary, use format: heading, description, keywords. Dont talk about the same thing in multiple parts. Dont talk about very generic things.';
-
-  // Summarize each chunk and append to the result
-  for (const chunk of chunks) {
-
-    let result;
-    try {
-      result = await summarize(cleanInput(chunk), context, signal);
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.log('Summarization task was aborted.');
-            
-            while (newWidget.lastChild && newWidget.lastChild.className && newWidget.lastChild.className.includes('contents')) {
-                newWidget.removeChild(newWidget.lastChild);
-            }
-
-            adjustWidgetSize(newWidget, ['.widget-header'], 20);
-            return;
-          } else {
-            console.log('Error during summarization:', error);
-            continue;
-          }
-    }
-
-    let textElement = document.createElement('p');
-    // Use a class instead of an ID to allow multiple elements
-    textElement.classList.add('basic-summary-contents');
-
-    textElement.innerHTML = marked.parse(result);
-    newWidget.appendChild(textElement);
-    adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
-  }
 }
 
 function loadMoreTitles(item, titlesList, moreButton, initialCount, loadCount) {

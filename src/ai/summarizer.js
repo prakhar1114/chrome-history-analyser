@@ -35,7 +35,7 @@ async function summarize(text, context, signal) {
             throw new DOMException('Operation aborted', 'AbortError');
         }
 
-        const summarizer = await getSummarizer(signal);
+        const summarizer = await getSummarizer();
 
         // Listen for abort event to cancel summarization
         return new Promise(async (resolve, reject) => {
@@ -64,6 +64,56 @@ async function summarize(text, context, signal) {
     }
 }
 
+async function summarizeStreaming(text, context, signal) {
+    try {
+        if (signal.aborted) {
+            throw new DOMException('Operation aborted', 'AbortError');
+        }
+
+        const summarizer = await getSummarizer();
+
+        // Listen for abort event to cancel summarization
+        const streamPromise = new Promise(async (resolve, reject) => {
+            const onAbort = () => {
+                console.log('Abort signal received. Destroying summarizer.');
+                summarizer.destroy();
+                reject(new DOMException('Operation aborted', 'AbortError'));
+            };
+
+            signal.addEventListener('abort', onAbort);
+
+            try {
+                const stream = await summarizer.summarizeStreaming(text, { context });
+                resolve(stream);
+            } catch (error) {
+                await summarizer.destroy();
+                reject(error);
+            }
+            // Do not remove the abort listener here; it will be handled after stream consumption
+        });
+
+        const stream = await streamPromise;
+
+        // Create a wrapper async generator to handle summarizer destruction after stream consumption
+        async function* wrappedStream() {
+            try {
+                for await (const chunk of stream) {
+                    yield chunk;
+                }
+            } finally {
+                console.log('Stream consumption complete. Destroying summarizer.');
+                await summarizer.destroy();
+                signal.removeEventListener('abort', () => {}); // Remove the actual handler if possible
+            }
+        }
+
+        return wrappedStream();
+    } catch (error) {
+        console.log('Error during summarization:', error);
+        throw error;
+    }
+}
+
 async function summarizeWithContext(text, context) {
     try {
         const summarizer = await getSummarizer();
@@ -85,4 +135,4 @@ async function summarizeLargeTextWithContext(text, context) {
     }
 }
 
-export { summarize, summarizeWithContext, summarizeLargeTextWithContext };
+export { summarize, summarizeWithContext, summarizeLargeTextWithContext, summarizeStreaming };

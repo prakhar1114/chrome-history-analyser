@@ -63,4 +63,12 @@ function cleanInput(text, maxLength = 4000) {
   return text;
 }
 
-export { extractDomain, markdownToHtml, cleanInput };
+function fisherYatesShuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); // Random index
+    [array[i], array[j]] = [array[j], array[i]];   // Swap elements
+  }
+  return array;
+}
+
+export { extractDomain, markdownToHtml, cleanInput, fisherYatesShuffle };
