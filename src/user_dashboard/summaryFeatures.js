@@ -21,9 +21,19 @@ async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, sig
     // Summarize each chunk and append to the result
     for (const chunk of chunks) {
   
-      let result;
+      let textElement = document.createElement('p');
+      textElement.classList.add('basic-summary-contents');
+      newWidget.appendChild(textElement);
+
+      let stream;
       try {
-        result = await summarize(cleanInput(chunk), context, signal);
+        stream = await summarizeStreaming(cleanInput(chunk), context, signal);
+
+        for await (const streamChunk of stream) {
+            textElement.innerHTML = marked.parse(streamChunk);
+            adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
+        }
+
       } catch (error) {
           if (error.name === 'AbortError') {
               console.log('Summarization task was aborted.');
@@ -39,14 +49,6 @@ async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, sig
               continue;
             }
       }
-  
-      let textElement = document.createElement('p');
-      // Use a class instead of an ID to allow multiple elements
-      textElement.classList.add('basic-summary-contents');
-  
-      textElement.innerHTML = marked.parse(result);
-      newWidget.appendChild(textElement);
-      adjustWidgetSize(newWidget, ['.widget-header', '.basic-summary-contents'], 60);
     }
   }
 
