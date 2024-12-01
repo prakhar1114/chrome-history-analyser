@@ -2,6 +2,7 @@ import { marked } from 'marked';
 import { summarize } from '../ai/summarizer.js';
 import { getHistoryWithTopNStats } from './history.js';
 import { createOrGetWidget, adjustWidgetSize, initializeMasonry } from './widgets.js';
+import { renderFeatureDropdown } from './featureSelection.js';
 import { cleanInput } from './utils.js';
 import { addOrUpdateWordCloudWidget, getWordDistribution } from './wordcloud.js';
 import './styles.css';
@@ -15,6 +16,7 @@ const state = {
     enableBasicSummary: true,
     enableWordCloud: true,
     summaryAbortController: null,
+    selectedFeature: "Detailed Summary",
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -26,6 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize category and exclude filters
     await initializeFilters();
+    const selectedFeature = await getSelectedFeature();
+    if (selectedFeature) {
+        state.selectedFeature = selectedFeature;
+    }
     initializeMasonry();
     await loadContent();
     // enableResizing();
@@ -213,18 +219,32 @@ async function addOrUpdateRecentHistoryWidget(startDate, endDate) {
 }
 
 async function addOrUpdateBasicSummaryWidget(startDate, endDate, signal) {
-  const newWidget = createOrGetWidget('basic-summary', 'Summary');
+  const newWidget = createOrGetWidget('basic-summary', state.selectedFeature);
+
+  // fetch widget-header and add a drop down menu with buttons with callbacks to update state.selectedFeature
+  const widgetHeader = newWidget.querySelector('.widget-header');
+  if (widgetHeader.querySelector('.dropdown') === null) {
+    renderFeatureDropdown(widgetHeader, loadRequestedFeature);
+  }
 
   // delete children containing *contents*
   while (newWidget.lastChild && newWidget.lastChild.className && newWidget.lastChild.className.includes('contents')) {
       newWidget.removeChild(newWidget.lastChild);
   }
 
-  await createBasicSummaryElement(newWidget, startDate, endDate, signal);
+  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
+
+
+  if (state.selectedFeature === "Detailed Summary") {
+    await createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal);
+  } else {
+    console.log('selectedFeature', state.selectedFeature);
+    console.log("add other features here")
+  }
 }
 
 /* Load Content Based on Date Range */
-async function loadContent(rerenderWordCloud = true) {
+async function loadContent(rerenderWordCloud = true, rerenderRecentHistory = true, rerenderAIFeature = true) {
   console.log('Selected Filters:', state.selectedFilters);
   console.log('Exclude Filters:', state.excludeFilters);
   
@@ -243,11 +263,19 @@ async function loadContent(rerenderWordCloud = true) {
     addOrUpdateWordCloudWidget(wordDistribution, handleWordSelect, handleWordDeselect);
   }
 
-  addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
+  if (rerenderRecentHistory) {
+    addOrUpdateRecentHistoryWidget(state.startDate, state.endDate);
+  }
 
-  if (state.enableBasicSummary) {
+  if (state.enableBasicSummary && rerenderAIFeature) {
     addOrUpdateBasicSummaryWidget(state.startDate, state.endDate, signal);
   }
+}
+
+function loadRequestedFeature(feature) {
+    state.selectedFeature = feature;
+    saveSelectedFeature();
+    loadContent(false, false, true);
 }
 
 async function createRecentHistoryElement(startDate, endDate) {
@@ -322,8 +350,7 @@ async function createRecentHistoryElement(startDate, endDate) {
   return container;
 }
 
-async function createBasicSummaryElement(newWidget, startDate, endDate, signal) {
-  const { topNHostnamesWithTitles } = await getHistoryWithTopNStats(startDate, endDate, 10, state.selectedFilters, state.excludeFilters);
+async function createBasicSummaryElement(newWidget, topNHostnamesWithTitles, signal) {
   const historyItems = topNHostnamesWithTitles.map(item => item.titles).flat();
 
   // Append all history items to a single string
@@ -448,6 +475,20 @@ function getSelectedFilters() {
         chrome.storage.local.get(['selectedFilters'], (result) => {
             resolve(result.selectedFilters || []);
         });
+    });
+}
+
+function getSelectedFeature() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['selectedFeature'], (result) => {
+            resolve(result.selectedFeature || null);
+        });
+    });    
+}
+
+function saveSelectedFeature() {
+    chrome.storage.local.set({ selectedFeature: state.selectedFeature }, () => {
+        console.log('Selected feature saved:', state.selectedFeature);
     });
 }
 
