@@ -41,7 +41,10 @@ TraceMyJourney is a Chrome extension that revolutionizes the way you view and in
    - Click on **Load unpacked** and select the `dist` folder from the cloned repository.
    
 4. **Usage**
-   - After loading the extension, it will start indexing your browsing history. 
+   - After loading the extension, it will start indexing your browsing history.
+
+5. **Loading My History Page**
+  - Click on the TraceMyJourney icon in the extensions dropdown menu. This will open a popup. Click on **My History** button to view your history with the word clouds, summaries, etc.
    
 ### Important Notes
   - **Please note that indexing older history may take some time initially. Over time, when more and more history is indexed, the word clouds will become more and more accurate. Indexing of all the new history items are done in real-time by the background service worker.**
