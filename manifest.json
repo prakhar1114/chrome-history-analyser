@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "TraceMyHistory",
+    "name": "TraceMyJourney",
     "version": "2.0",
     "description": "Creates an amazing dashboard for your history over time.",
     "permissions": [
