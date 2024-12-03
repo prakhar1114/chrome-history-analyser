@@ -26,7 +26,7 @@ const featureObjects = [
     {
         "feature": "Summary of My Research to Share with Colleagues",
         "context": "Provide a concise and structured summary of the user's research based on browsing history titles, formatted in Markdown with clear sections.",
-        "model": "writer",
+        "model": "prompt",
         "seed_prompt": "Summarize the user's research based on their browsing history titles. Present the summary in Markdown format, with each section containing a heading, a brief description, and relevant keywords. Ensure each section covers unique aspects without redundancy or overly generic information. Below is the list of titles to inspire the summary:\n"
     },
 ]

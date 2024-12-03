@@ -35,8 +35,11 @@ module.exports = {
         ],
       },
       {
-        test: /\.(png|jpg|gif|svg)$/i, // Handle image files
+        test: /\.(png|jpg|gif|svg|ico)$/i, // Handle image files
         type: 'asset/resource',
+        generator: {
+          filename: 'icons/[name][ext]', // Output icons to 'icons' folder in 'dist'
+        },
       },
       {
         test: /\.html$/, // Handle HTML files
@@ -57,11 +60,12 @@ module.exports = {
       chunks: ['user_dashboard'], // Include only the 'user_dashboard' bundle
     }),
     new CopyWebpackPlugin({
-        patterns: [
-          { from: 'manifest.json', to: 'manifest.json' }, // Copies manifest.json to 'dist'
-          // Add other static assets if needed
-        ],
-      }),
+      patterns: [
+        { from: 'manifest.json', to: 'manifest.json' }, // Copies manifest.json to 'dist'
+        { from: 'src/icons', to: 'icons' },             // Copies icons directory to 'dist/icons'
+        // Add other static assets if needed
+      ],
+    }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
     }),

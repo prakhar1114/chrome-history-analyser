@@ -104,7 +104,7 @@ chrome.history.onVisited.addListener(async (historyItem) => {
     console.log('New history item indexed');
 
   } catch (error) {
-    console.error('Error indexing new history item:', error);
+    console.info('Error indexing new history item:', error);
   }
 });
 

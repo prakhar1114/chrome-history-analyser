@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "My Chrome Usage Analyser",
+    "name": "TraceMyHistory",
     "version": "2.0",
     "description": "Creates an amazing dashboard for your history over time.",
     "permissions": [
@@ -8,6 +8,14 @@
       "storage",
       "tabs"
     ],
+    "icons": {
+      "16": "icons/icon16.ico",
+      "24": "icons/icon24.ico",
+      "32": "icons/icon32.ico",
+      "48": "icons/icon48.ico",
+      "64": "icons/icon64.ico",
+      "128": "icons/icon128.ico"
+    },
     "background": {
       "service_worker": "background.bundle.js",
       "type": "module"
